@@ -40,9 +40,13 @@
     document.documentElement.dataset.pet = store.getMode();
     document.body.classList.remove("horror");
     document.querySelectorAll("[data-theme-toggle]").forEach((button) => button.remove());
-    document.querySelectorAll('a[href="admin.html"]').forEach((link) => link.remove());
+    document.querySelectorAll('a[href="admin.html"]').forEach((link) => { link.hidden = true; });
     document.querySelectorAll(".footer-inner > span").forEach((text) => { if (text.textContent.includes("2026")) text.textContent = "Pussy & Puppy © 2026"; });
     renderPetModeControl(); renderCustomerNavigation(); renderSoundControl();
+  }
+  async function renderAdminNavigation() {
+    const authenticated = await store.getAdminSession();
+    document.querySelectorAll('a[href="admin.html"]').forEach((link) => { link.hidden = !authenticated; if (authenticated) link.dataset.adminConfirmed = ""; else delete link.dataset.adminConfirmed; });
   }
   function renderPetModeControl() {
     if (location.pathname.endsWith("/admin.html")) return;
@@ -115,6 +119,8 @@
   function renderHome() {
     const grid = document.querySelector("#featured-products");
     const mode = store.getMode();
+    const featuredLink = document.querySelector(".section-heading .text-link");
+    if (featuredLink) featuredLink.href = "products.html?featured=1#product-grid";
     if (grid) { grid.closest(".section").style.paddingTop = "35px"; grid.innerHTML = store.getProducts().filter((item) => item.featured && (mode === "both" || item.petType === mode || item.petType === "both")).slice(0, 4).map(productCard).join(""); }
   }
   function renderProducts() {
@@ -125,31 +131,35 @@
     const categories = mode === "dog" ? baseCategories : [...baseCategories, ...catCategories];
     const filterBar = document.querySelector(".filters");
     const eligibleForMode = (item) => mode === "both" || item.petType === mode || item.petType === "both";
-    const eligible = store.getProducts().filter(eligibleForMode);
+    const featuredOnly = new URLSearchParams(location.search).get("featured") === "1";
+    const eligible = store.getProducts().filter((item) => eligibleForMode(item) && (!featuredOnly || item.featured));
     const availableMin = eligible.length ? Math.min(...eligible.map((item) => item.price)) : 0;
     const availableMax = eligible.length ? Math.max(...eligible.map((item) => item.price)) : 0;
-    const storageKey = `pap-product-filters-${mode}`; const params = new URLSearchParams(location.search);
+    const storageKey = `pap-product-filters-${mode}${featuredOnly ? "-featured" : ""}`; const params = new URLSearchParams(location.search);
     if (params.get("reset") === "1") { sessionStorage.removeItem(storageKey); history.replaceState({}, "", `${location.pathname}${location.hash}`); }
     let saved = {}; try { saved = JSON.parse(sessionStorage.getItem(storageKey)) || {}; } catch {}
-    const state = { category:categories.includes(saved.category) ? saved.category : "all", age:["all","young","adult","senior"].includes(saved.age) ? saved.age : "all", min:Math.max(availableMin, Number(saved.min) || availableMin), max:Math.min(availableMax, Number(saved.max) || availableMax) };
+    const state = { category:categories.includes(saved.category) ? saved.category : "all", age:["all","young","adult","senior"].includes(saved.age) ? saved.age : "all", search:String(saved.search || ""), min:Math.max(availableMin, Number(saved.min) || availableMin), max:Math.min(availableMax, Number(saved.max) || availableMax) };
     if (state.min > state.max) { state.min = availableMin; state.max = availableMax; }
-    filterBar.innerHTML = `<div class="category-chips">${[`<button class="filter-button" data-category="all">All Products</button>`, ...categories.map((category) => `<button class="filter-button" data-category="${escapeHtml(category)}">${escapeHtml(category)}</button>`)].join("")}</div><div class="filter-tools"><label class="age-filter">Age<select><option value="all">All Ages</option><option value="young">Puppy / Kitten</option><option value="adult">Adult</option><option value="senior">Senior</option></select></label><div class="price-filter"><div><span>Price Range</span><strong data-price-output></strong></div><div class="dual-range"><div class="range-track"></div><input data-price-min type="range" min="${availableMin}" max="${availableMax}" value="${state.min}"><input data-price-max type="range" min="${availableMin}" max="${availableMax}" value="${state.max}"></div></div><button class="reset-filters" type="button">Reset Filters</button></div>`;
-    const buttons = filterBar.querySelectorAll("[data-category]"); const ageSelect = filterBar.querySelector("select"); const minInput = filterBar.querySelector("[data-price-min]"); const maxInput = filterBar.querySelector("[data-price-max]"); const priceOutput = filterBar.querySelector("[data-price-output]");
+    const youngLabel = mode === "cat" ? "Kitten" : mode === "dog" ? "Puppy" : "Puppy / Kitten";
+    filterBar.innerHTML = `<div class="category-chips">${[`<button class="filter-button" data-category="all">All Products</button>`, ...categories.map((category) => `<button class="filter-button" data-category="${escapeHtml(category)}">${escapeHtml(category)}</button>`)].join("")}</div><div class="filter-tools"><label class="age-filter">Age<select><option value="all">All Ages</option><option value="young">${youngLabel}</option><option value="adult">Adult</option><option value="senior">Senior</option></select></label><label class="age-filter">Search<input data-product-search type="search" value="${escapeHtml(state.search)}" placeholder="Search products"></label><div class="price-filter"><div><span>Price Range</span><strong data-price-output></strong></div><div class="dual-range"><div class="range-track"></div><input data-price-min type="range" min="${availableMin}" max="${availableMax}" value="${state.min}"><input data-price-max type="range" min="${availableMin}" max="${availableMax}" value="${state.max}"></div></div><button class="reset-filters" type="button">Reset Filters</button></div>`;
+    const buttons = filterBar.querySelectorAll("[data-category]"); const ageSelect = filterBar.querySelector("select"); const searchInput = filterBar.querySelector("[data-product-search]"); const minInput = filterBar.querySelector("[data-price-min]"); const maxInput = filterBar.querySelector("[data-price-max]"); const priceOutput = filterBar.querySelector("[data-price-output]");
     ageSelect.value = state.age;
     const saveAndDraw = () => {
       sessionStorage.setItem(storageKey, JSON.stringify(state));
       buttons.forEach((button) => button.classList.toggle("active", button.dataset.category === state.category));
       ageSelect.value = state.age; minInput.value = state.min; maxInput.value = state.max; priceOutput.textContent = `${money(state.min)} — ${money(state.max)}`;
       const span = Math.max(1, availableMax - availableMin); const left = ((state.min - availableMin) / span) * 100; const right = 100 - ((state.max - availableMin) / span) * 100; filterBar.style.setProperty("--range-left", `${left}%`); filterBar.style.setProperty("--range-right", `${right}%`);
-      const list = eligible.filter((item) => (state.category === "all" || item.category === state.category) && (state.age === "all" || item.age === state.age || item.age === "all") && item.price >= state.min && item.price <= state.max);
+      const search = state.search.trim().toLowerCase();
+      const list = eligible.filter((item) => (state.category === "all" || item.category === state.category) && (state.age === "all" || item.ageGroup === state.age || item.ageGroup === "all") && (!search || `${item.name} ${item.description}`.toLowerCase().includes(search)) && item.price >= state.min && item.price <= state.max);
       grid.innerHTML = list.length ? list.map(productCard).join("") : `<p class="empty-state">ยังไม่มีสินค้าในหมวดนี้</p>`;
       updateProductCartState();
     };
     buttons.forEach((button) => button.addEventListener("click", () => { state.category = button.dataset.category; saveAndDraw(); }));
     ageSelect.addEventListener("change", () => { state.age = ageSelect.value; saveAndDraw(); });
+    searchInput.addEventListener("input", () => { state.search = searchInput.value; saveAndDraw(); });
     minInput.addEventListener("input", () => { state.min = Math.min(Number(minInput.value), state.max); saveAndDraw(); });
     maxInput.addEventListener("input", () => { state.max = Math.max(Number(maxInput.value), state.min); saveAndDraw(); });
-    filterBar.querySelector(".reset-filters").addEventListener("click", () => { state.category="all"; state.age="all"; state.min=availableMin; state.max=availableMax; saveAndDraw(); });
+    filterBar.querySelector(".reset-filters").addEventListener("click", () => { state.category="all"; state.age="all"; state.search=""; searchInput.value=""; state.min=availableMin; state.max=availableMax; saveAndDraw(); });
     saveAndDraw();
   }
   function renderDetail() {
@@ -190,5 +200,10 @@
     form.addEventListener("submit", async (event) => { event.preventDefault(); const data = new FormData(form); const name = data.get("name").trim(); try { await store.loginUser({ name, email:data.get("email").trim() }); sound("success"); document.querySelector("#login-status").textContent = `เข้าสู่ระบบแล้ว สวัสดี ${name}!`; const next = sessionStorage.getItem("pap-after-login"); if (next) sessionStorage.removeItem("pap-after-login"); location.href = next || "home.html"; } catch (error) { document.querySelector("#login-status").textContent = error.message; } });
   }
   window.PAP = { money, productCard, toast, sound };
-  document.addEventListener("DOMContentLoaded", async () => { try { await store.load(); applyTheme(); bindShared(); renderHome(); renderProducts(); renderDetail(); renderCart(); bindLogin(); } catch (error) { document.body.insertAdjacentHTML("beforeend", `<div class="toast">Backend unavailable: ${escapeHtml(error.message)}</div>`); } });
+  document.addEventListener("DOMContentLoaded", async () => {
+    document.querySelectorAll('a[href="admin.html"]').forEach((link) => { link.hidden = true; });
+    if (!location.pathname.endsWith("/admin.html") && !store.hasMode()) { location.replace("index.html"); return; }
+    try { await store.load(); applyTheme(); await renderAdminNavigation(); bindShared(); renderHome(); renderProducts(); renderDetail(); renderCart(); bindLogin(); }
+    catch (error) { document.body.insertAdjacentHTML("beforeend", `<div class="toast">Backend unavailable: ${escapeHtml(error.message)}</div>`); }
+  });
 })();

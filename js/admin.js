@@ -9,6 +9,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   const preview = document.querySelector("#product-preview");
   const message = document.querySelector("#admin-message");
   let previewImage = "";
+  const petTypeField = form.elements.petType.closest(".field");
+  petTypeField.insertAdjacentHTML("afterend", `<div class="field"><label for="age-group">Age Group</label><select id="age-group" name="ageGroup"><option value="all">All Ages</option><option value="young">Puppy / Kitten</option><option value="adult">Adult</option><option value="senior">Senior</option></select></div>`);
   ["Cat Litter","Litter Box","Cat Toilet"].forEach((category) => { const option = document.createElement("option"); option.textContent = category; form.elements.category.append(option); });
   document.querySelector(".admin-shell").insertAdjacentHTML("beforeend", `<section class="table-wrap admin-list"><h2>Customer Orders</h2><div id="admin-orders"></div></section>`);
   document.querySelector(".nav").insertAdjacentHTML("beforeend", `<button class="ghost-button" id="admin-logout" type="button">Logout Admin</button>`);
@@ -58,7 +60,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const edit = event.target.closest("[data-edit]"); const remove = event.target.closest("[data-delete]");
     if (edit) {
       const product = store.getProducts().find((item) => item.id === Number(edit.dataset.edit));
-      ["id","name","description","price","stock","category","petType"].forEach((key) => { form.elements[key].value = product[key]; });
+      ["id","name","description","price","stock","category","petType","ageGroup"].forEach((key) => { form.elements[key].value = product[key]; });
       form.elements.currentImage.value = product.image || ""; form.elements.featured.checked = product.featured; previewImage = product.image || "";
       form.querySelector("button[type=submit]").textContent = "Save Changes"; drawPreview(); form.scrollIntoView({ behavior:"smooth" });
     }

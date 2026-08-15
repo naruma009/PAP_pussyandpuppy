@@ -67,11 +67,17 @@ def init_db():
     UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
     db = get_db()
     db.executescript((BASE_DIR / "schema.sql").read_text(encoding="utf-8"))
+    product_columns = {row["name"] for row in db.execute("PRAGMA table_info(products)")}
+    if "age_group" not in product_columns:
+        db.execute("ALTER TABLE products ADD COLUMN age_group TEXT NOT NULL DEFAULT 'all'")
+        if "age" in product_columns:
+            db.execute("UPDATE products SET age_group = age WHERE age IN ('all','young','adult','senior')")
+        db.commit()
     if db.execute("SELECT COUNT(*) FROM products").fetchone()[0] == 0:
         now = utc_now()
         db.executemany(
             """INSERT INTO products
-               (id,name,description,price,stock,category,pet_type,age,image_url,emoji,featured,created_at,updated_at)
+               (id,name,description,price,stock,category,pet_type,age_group,image_url,emoji,featured,created_at,updated_at)
                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)""",
             [(*product, now, now) for product in SEED_PRODUCTS],
         )
@@ -82,7 +88,7 @@ def product_json(row):
     return {
         "id": row["id"], "name": row["name"], "description": row["description"],
         "price": row["price"], "stock": row["stock"], "category": row["category"],
-        "petType": row["pet_type"], "age": row["age"], "image": row["image_url"],
+        "petType": row["pet_type"], "ageGroup": row["age_group"], "image": row["image_url"],
         "emoji": row["emoji"], "featured": bool(row["featured"]),
         "createdAt": row["created_at"], "updatedAt": row["updated_at"],
     }
@@ -138,6 +144,9 @@ def product_payload(existing=None):
     pet_type = source["petType"]
     if pet_type not in {"cat", "dog", "both"}:
         raise ValueError("Invalid pet type")
+    age_group = source.get("ageGroup") or (existing["age_group"] if existing else "all")
+    if age_group not in {"all", "young", "adult", "senior"}:
+        raise ValueError("Invalid age group")
     price = float(source["price"])
     stock = int(source["stock"])
     if price < 0 or stock < 0:
@@ -152,7 +161,7 @@ def product_payload(existing=None):
     return {
         "name": source["name"].strip(), "description": source["description"].strip(),
         "price": price, "stock": stock, "category": source["category"].strip(),
-        "pet_type": pet_type, "age": source.get("age") or (existing["age"] if existing else "all"), "image_url": image_url,
+        "pet_type": pet_type, "age_group": age_group, "image_url": image_url,
         "emoji": source.get("emoji", "🐾"), "featured": 1 if source.get("featured") in {"true", "on", "1"} else 0,
     }
 
@@ -190,8 +199,8 @@ def create_product():
         return jsonify(error=str(error)), 400
     now = utc_now(); db = get_db()
     cursor = db.execute(
-        """INSERT INTO products (name,description,price,stock,category,pet_type,age,image_url,emoji,featured,created_at,updated_at)
-           VALUES (:name,:description,:price,:stock,:category,:pet_type,:age,:image_url,:emoji,:featured,:created_at,:updated_at)""",
+        """INSERT INTO products (name,description,price,stock,category,pet_type,age_group,image_url,emoji,featured,created_at,updated_at)
+           VALUES (:name,:description,:price,:stock,:category,:pet_type,:age_group,:image_url,:emoji,:featured,:created_at,:updated_at)""",
         {**data, "created_at": now, "updated_at": now},
     )
     db.commit(); row = db.execute("SELECT * FROM products WHERE id = ?", (cursor.lastrowid,)).fetchone()
@@ -210,7 +219,7 @@ def update_product(product_id):
         return jsonify(error=str(error)), 400
     db.execute(
         """UPDATE products SET name=:name,description=:description,price=:price,stock=:stock,category=:category,
-           pet_type=:pet_type,age=:age,image_url=:image_url,emoji=:emoji,featured=:featured,updated_at=:updated_at WHERE id=:id""",
+           pet_type=:pet_type,age_group=:age_group,image_url=:image_url,emoji=:emoji,featured=:featured,updated_at=:updated_at WHERE id=:id""",
         {**data, "updated_at": utc_now(), "id": product_id},
     )
     db.commit(); return jsonify(product_json(db.execute("SELECT * FROM products WHERE id = ?", (product_id,)).fetchone()))
@@ -352,13 +361,15 @@ def migrate_legacy():
     for product in products:
         if not product.get("name"):
             continue
+        if product.get("age") not in {"all", "young", "adult", "senior"}:
+            product["age"] = "all"
         image_url = decode_legacy_image(product.get("image", "")); product_id = int(product.get("id") or 0) or None
         values = (product["name"], product.get("description", ""), max(0, float(product.get("price", 0))), max(0, int(product.get("stock", 0))), product.get("category") or "Other", product.get("petType") if product.get("petType") in {"cat","dog","both"} else "both", product.get("age", "all"), image_url, product.get("emoji", "🐾"), 1 if product.get("featured") else 0, now, now)
         if product_id:
-            db.execute("""INSERT INTO products (id,name,description,price,stock,category,pet_type,age,image_url,emoji,featured,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)
-                          ON CONFLICT(id) DO UPDATE SET name=excluded.name,description=excluded.description,price=excluded.price,stock=excluded.stock,category=excluded.category,pet_type=excluded.pet_type,age=excluded.age,image_url=excluded.image_url,emoji=excluded.emoji,featured=excluded.featured,updated_at=excluded.updated_at""", (product_id, *values))
+            db.execute("""INSERT INTO products (id,name,description,price,stock,category,pet_type,age_group,image_url,emoji,featured,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)
+                          ON CONFLICT(id) DO UPDATE SET name=excluded.name,description=excluded.description,price=excluded.price,stock=excluded.stock,category=excluded.category,pet_type=excluded.pet_type,age_group=excluded.age_group,image_url=excluded.image_url,emoji=excluded.emoji,featured=excluded.featured,updated_at=excluded.updated_at""", (product_id, *values))
         else:
-            db.execute("INSERT INTO products (name,description,price,stock,category,pet_type,age,image_url,emoji,featured,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", values)
+            db.execute("INSERT INTO products (name,description,price,stock,category,pet_type,age_group,image_url,emoji,featured,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", values)
         migrated += 1
     db.execute("INSERT INTO settings (key,value) VALUES ('legacy_migrated',?)", (now,)); db.commit()
     return jsonify(migrated=True, count=migrated)

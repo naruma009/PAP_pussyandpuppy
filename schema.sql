@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS products (
   stock INTEGER NOT NULL CHECK (stock >= 0),
   category TEXT NOT NULL,
   pet_type TEXT NOT NULL CHECK (pet_type IN ('cat','dog','both')),
-  age TEXT NOT NULL DEFAULT 'all',
+  age_group TEXT NOT NULL DEFAULT 'all' CHECK (age_group IN ('all','young','adult','senior')),
   image_url TEXT NOT NULL DEFAULT '',
   emoji TEXT NOT NULL DEFAULT '🐾',
   featured INTEGER NOT NULL DEFAULT 0,

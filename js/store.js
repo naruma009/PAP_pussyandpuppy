@@ -37,8 +37,9 @@
       saveCart(cart); return true;
     },
     cartCount: () => getCart().reduce((sum, item) => sum + item.qty, 0),
-    getMode: () => sessionStorage.getItem("pap-mode") || "both",
-    setMode: (mode) => sessionStorage.setItem("pap-mode", mode),
+    hasMode: () => ["cat","dog","both"].includes(localStorage.getItem("pap-mode") || sessionStorage.getItem("pap-mode")),
+    getMode: () => localStorage.getItem("pap-mode") || sessionStorage.getItem("pap-mode"),
+    setMode(mode) { localStorage.setItem("pap-mode", mode); sessionStorage.removeItem("pap-mode"); },
     getUser: () => state.user,
     async loginUser(user) { const result = await api("/api/customer/login", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(user) }); state.user = result.customer; return state.user; },
     async clearUser() { await api("/api/customer/logout", { method:"POST" }); state.user = null; state.orders = []; },
