@@ -120,8 +120,17 @@
     const grid = document.querySelector("#featured-products");
     const mode = store.getMode();
     const featuredLink = document.querySelector(".section-heading .text-link");
-    if (featuredLink) featuredLink.href = "products.html?featured=1#product-grid";
-    if (grid) { grid.closest(".section").style.paddingTop = "35px"; grid.innerHTML = store.getProducts().filter((item) => item.featured && (mode === "both" || item.petType === mode || item.petType === "both")).slice(0, 4).map(productCard).join(""); }
+    if (!grid) return;
+    const featured = store.getProducts().filter((item) => item.featured && (mode === "both" || item.petType === mode || item.petType === "both"));
+    let expanded = false;
+    const draw = () => { grid.innerHTML = (expanded ? featured : featured.slice(0, 4)).map(productCard).join(""); updateProductCartState(); };
+    grid.closest(".section").style.paddingTop = "35px";
+    if (featuredLink) {
+      featuredLink.href = "#featured-products";
+      featuredLink.hidden = featured.length <= 4;
+      featuredLink.addEventListener("click", (event) => { event.preventDefault(); expanded = !expanded; featuredLink.textContent = expanded ? "แสดงน้อยลง ↑" : "ดูทั้งหมด →"; draw(); grid.scrollIntoView({ behavior:"smooth", block:"start" }); });
+    }
+    draw();
   }
   function renderProducts() {
     const grid = document.querySelector("#product-grid"); if (!grid) return;

@@ -17,6 +17,7 @@ DATABASE = BASE_DIR / "instance" / "pap.db"
 UPLOAD_DIR = BASE_DIR / "uploads" / "products"
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "webp"}
 IS_PRODUCTION = os.environ.get("PAP_ENV", "development").lower() == "production"
+PET_THEME_INIT = """<script>(function(){try{var m=localStorage.getItem('pap-mode')||sessionStorage.getItem('pap-mode');if(['cat','dog','both'].includes(m))document.documentElement.dataset.pet=m}catch(e){}})();</script>"""
 
 if IS_PRODUCTION and not os.environ.get("PAP_SECRET_KEY"):
     raise RuntimeError("PAP_SECRET_KEY is required in production")
@@ -170,6 +171,11 @@ def product_payload(existing=None):
 def no_api_cache(response):
     if request.path.startswith("/api/"):
         response.headers["Cache-Control"] = "no-store"
+    elif response.mimetype == "text/html":
+        response.direct_passthrough = False
+        html = response.get_data(as_text=True)
+        if "<head>" in html:
+            response.set_data(html.replace("<head>", f"<head>{PET_THEME_INIT}", 1))
     return response
 
 
