@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+
+# Runtime data (kept on the hosting server, not in source control)
+instance/*.db
+instance/*.db-*
+uploads/products/*
+!instance/.gitkeep
+!uploads/products/.gitkeep
+
+# Editor and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

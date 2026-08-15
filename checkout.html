@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Checkout — PAP</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <header class="site-header"><nav class="nav container"><a class="logo" href="home.html"><span class="logo-mark">P</span>PAP</a><div class="nav-links"><a href="home.html">Home</a><a href="products.html">Products</a></div><div class="nav-actions"><a class="round-link" href="login.html" aria-label="Customer login">☺</a><a class="round-link" href="cart.html" aria-label="Cart">🛒<span class="cart-badge" data-cart-count>0</span></a></div></nav></header>
+  <main id="checkout-main" class="checkout-shell container">
+    <div class="section-heading"><div><span class="eyebrow">Almost home</span><h1>Shipping &amp; Order</h1><p>ตรวจข้อมูลจัดส่งและรายการสินค้าก่อนยืนยัน</p></div></div>
+    <div class="checkout-layout">
+      <form id="checkout-form" class="checkout-form">
+        <h2>Shipping Address</h2>
+        <div class="field"><label for="full-name">Full Name</label><input id="full-name" name="fullName" required autocomplete="name"></div>
+        <div class="form-row"><div class="field"><label for="phone">Phone Number</label><input id="phone" name="phone" type="tel" required autocomplete="tel"></div><div class="field"><label for="checkout-email">Email</label><input id="checkout-email" name="email" type="email" required autocomplete="email"></div></div>
+        <div class="field"><label for="address">Address</label><textarea id="address" name="address" required autocomplete="street-address"></textarea></div>
+        <div class="form-row"><div class="field"><label for="district">District / Area</label><input id="district" name="district" required></div><div class="field"><label for="province">Province</label><input id="province" name="province" required></div></div>
+        <div class="field"><label for="postal-code">Postal Code</label><input id="postal-code" name="postalCode" inputmode="numeric" pattern="[0-9]{5}" required autocomplete="postal-code"></div>
+        <button class="button" type="submit">Place Order</button><p id="checkout-error" class="status" aria-live="polite"></p>
+      </form>
+      <aside class="order-summary"><h2>Order Summary</h2><div id="checkout-items"></div><div class="summary-row"><span>Total</span><strong id="checkout-total">฿0</strong></div><div id="shipping-preview" class="shipping-preview"><strong>Shipping Address</strong><p>กรอกข้อมูลเพื่อดูที่อยู่จัดส่ง</p></div></aside>
+    </div>
+  </main>
+  <script src="js/data.js"></script><script src="js/store.js"></script><script src="js/app.js"></script><script src="js/checkout.js"></script>
+</body>
+</html>
