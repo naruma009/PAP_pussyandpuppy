@@ -1,6 +1,8 @@
+import { useEffect } from "react";
 import HealthStatus from "../components/HealthStatus";
 
 export default function HealthPage() {
+  useEffect(() => { document.title = "FastAPI health — PAP"; }, []);
   return (
     <section>
       <p className="eyebrow">Local integration proof</p>

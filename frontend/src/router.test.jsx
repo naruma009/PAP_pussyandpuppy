@@ -18,26 +18,34 @@ it("guards commerce routes until a Pet Mode is selected", async () => {
 });
 
 it.each([
-  ["/home.html", "/home", "home"],
-  ["/products.html?featured=1", "/products", "products"],
-  ["/product.html?id=7", "/products/7", "product detail"],
-  ["/cart.html", "/cart", "cart"],
-  ["/login.html", "/login", "login"],
-  ["/checkout.html", "/checkout", "checkout"],
-])("maps legacy alias %s to %s", async (legacyPath, expectedPath, page) => {
+  ["/home.html", "/home"],
+  ["/products.html?featured=1", "/products"],
+  ["/product.html?id=7", "/products/7"],
+  ["/cart.html", "/cart"],
+  ["/login.html", "/login"],
+  ["/checkout.html", "/checkout"],
+])("maps legacy alias %s to %s", async (legacyPath, expectedPath) => {
   localStorage.setItem("pap-mode", "both");
   const router = renderRoute(legacyPath);
-  expect(await screen.findByRole("heading", { name: page })).toBeInTheDocument();
   await waitFor(() => expect(router.state.location.pathname).toBe(expectedPath));
+  expect(document.querySelector("#main")).toBeInTheDocument();
 });
 
 it("preserves query and hash through legacy aliases", async () => {
   localStorage.setItem("pap-mode", "cat");
   const router = renderRoute("/products.html?featured=1#product-grid");
-  await screen.findByRole("heading", { name: "products" });
-  expect(router.state.location).toMatchObject({
+  await waitFor(() => expect(router.state.location).toMatchObject({
     pathname: "/products",
     search: "?featured=1",
     hash: "#product-grid",
-  });
+  }));
+});
+
+it.each([
+  ["/home.html", /ของโปรดสำหรับ/],
+  ["/products.html", /ช้อปความสุข/],
+])("renders the catalog destination for legacy alias %s", async (legacyPath, heading) => {
+  localStorage.setItem("pap-mode", "both");
+  renderRoute(legacyPath);
+  expect(await screen.findByRole("heading", { level: 1, name: heading })).toBeInTheDocument();
 });

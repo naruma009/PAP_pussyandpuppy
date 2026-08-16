@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { RouterProvider, createMemoryRouter } from "react-router-dom";
 import { expect, it } from "vitest";
@@ -14,5 +14,6 @@ it("selects normal Pet Mode without exposing Horror behavior", async () => {
   await user.click(screen.getByRole("button", { name: /Cat ของดี/ }));
   expect(localStorage.getItem("pap-mode")).toBe("cat");
   expect(sessionStorage.getItem("pap-mode")).toBeNull();
-  expect(await screen.findByRole("heading", { name: "home" })).toBeInTheDocument();
+  await waitFor(() => expect(router.state.location.pathname).toBe("/home"));
+  expect(screen.getByRole("heading", { level: 1 })).toBeInTheDocument();
 });

@@ -1,0 +1,4 @@
+import { usePreferences } from "../../features/preferences/PreferenceProvider";
+export function CatalogLoading({ detail = false }) { const { t } = usePreferences(); return <div className={`catalog-loading${detail ? " catalog-loading--detail" : ""}`} role="status"><span className="sr-only">{t("loadingProducts")}</span></div>; }
+export function CatalogError({ onRetry }) { const { t } = usePreferences(); return <div className="empty-state" role="alert"><div className="big-emoji" aria-hidden="true">🐾</div><h2>{t("catalogError")}</h2><button className="button" type="button" onClick={onRetry}>{t("retry")}</button></div>; }
+export function CatalogEmpty({ title }) { const { t } = usePreferences(); return <div className="empty-state discovery-empty"><div className="big-emoji" aria-hidden="true">🐾</div><h2>{title}</h2><p>{t("tryFilters")}</p></div>; }

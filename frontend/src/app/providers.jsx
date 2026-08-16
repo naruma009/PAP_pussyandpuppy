@@ -1,5 +1,6 @@
 import PreferenceProvider from "../features/preferences/PreferenceProvider";
+import CatalogProvider from "../features/catalog/CatalogProvider";
 
 export default function AppProviders({ children }) {
-  return <PreferenceProvider>{children}</PreferenceProvider>;
+  return <PreferenceProvider><CatalogProvider>{children}</CatalogProvider></PreferenceProvider>;
 }

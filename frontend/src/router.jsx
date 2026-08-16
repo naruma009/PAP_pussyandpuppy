@@ -1,9 +1,12 @@
 import { Navigate, createBrowserRouter, useLocation, useSearchParams } from "react-router-dom";
 import App from "./App";
 import HealthPage from "./pages/HealthPage";
+import HomePage from "./pages/HomePage";
 import NotFoundPage from "./pages/NotFoundPage";
 import PetSelectionPage from "./pages/PetSelectionPage";
 import PlaceholderPage from "./pages/PlaceholderPage";
+import ProductDetailPage from "./pages/ProductDetailPage";
+import ProductsPage from "./pages/ProductsPage";
 
 function LegacyProductAlias() {
   const [params] = useSearchParams();
@@ -26,9 +29,9 @@ export const routes = [
     path: "/",
     element: <App />,
     children: [
-      { path: "home", element: <PlaceholderPage page="home" /> },
-      { path: "products", element: <PlaceholderPage page="products" /> },
-      { path: "products/:productId", element: <PlaceholderPage page="product detail" /> },
+      { path: "home", element: <HomePage /> },
+      { path: "products", element: <ProductsPage /> },
+      { path: "products/:productId", element: <ProductDetailPage /> },
       { path: "cart", element: <PlaceholderPage page="cart" /> },
       { path: "login", element: <PlaceholderPage page="login" /> },
       { path: "checkout", element: <PlaceholderPage page="checkout" /> },

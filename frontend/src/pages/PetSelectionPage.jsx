@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import PreferenceControls from "../components/layout/PreferenceControls";
 import { usePreferences } from "../features/preferences/PreferenceProvider";
@@ -11,6 +12,7 @@ const choices = [
 export default function PetSelectionPage() {
   const navigate = useNavigate();
   const { playSound, setPetMode, t } = usePreferences();
+  useEffect(() => { document.title = "PAP — Pussy and Puppy"; }, []);
   const selectMode = (mode) => {
     setPetMode(mode);
     playSound("click");

@@ -22,3 +22,7 @@ export async function apiRequest(path, options = {}) {
 export async function getHealth(signal) {
   return apiRequest("/health", { signal });
 }
+
+export async function getProducts(signal) {
+  return apiRequest("/products", { signal });
+}
