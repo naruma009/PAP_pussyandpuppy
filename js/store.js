@@ -21,6 +21,12 @@
     writeLocal("pap-cart", cart); return cart;
   }
   function saveCart(cart) { writeLocal("pap-cart", cart); window.dispatchEvent(new Event("pap-cart-change")); }
+  function getFavorites() {
+    const saved = readLocal("pap-favorites-v1", []).map(Number).filter(Number.isFinite);
+    const valid = [...new Set(saved)].filter((id) => state.products.some((product) => product.id === id));
+    if (valid.length !== saved.length) writeLocal("pap-favorites-v1", valid);
+    return valid;
+  }
 
   window.PAPStore = {
     load,
@@ -37,6 +43,14 @@
       saveCart(cart); return true;
     },
     cartCount: () => getCart().reduce((sum, item) => sum + item.qty, 0),
+    getFavorites,
+    isFavorite: (id) => getFavorites().includes(Number(id)),
+    toggleFavorite(id) {
+      id = Number(id); if (!state.products.some((product) => product.id === id)) return false;
+      const favorites = getFavorites(); const active = !favorites.includes(id);
+      writeLocal("pap-favorites-v1", active ? [...favorites, id] : favorites.filter((favoriteId) => favoriteId !== id));
+      window.dispatchEvent(new CustomEvent("pap-favorites-change", { detail:{ id, active } })); return active;
+    },
     hasMode: () => ["cat","dog","both"].includes(localStorage.getItem("pap-mode") || sessionStorage.getItem("pap-mode")),
     getMode: () => localStorage.getItem("pap-mode") || sessionStorage.getItem("pap-mode"),
     setMode(mode) { localStorage.setItem("pap-mode", mode); sessionStorage.removeItem("pap-mode"); },

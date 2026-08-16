@@ -12,15 +12,26 @@
     return ({ Food:"อาหาร", Treats:"ขนม", Toys:"ของเล่น", Beds:"ที่นอน", Grooming:"ดูแลขน", Clothing:"เสื้อผ้า", Accessories:"อุปกรณ์", "Health & Care":"สุขภาพและการดูแล", Other:"อื่น ๆ", "Cat Litter":"ทรายแมว", "Litter Box":"กระบะทราย", "Cat Toilet":"ห้องน้ำแมว" })[category] || category;
   }
   function visual(product, large = false) { return product.image ? `<img src="${product.image}" alt="${escapeHtml(product.name)}"${large ? " class=\"product-image-large\"" : ""}>` : `<span>${escapeHtml(product.emoji || "🐾")}</span>`; }
+  function favoriteButton(product, detail = false) {
+    const active = store.isFavorite(product.id); const label = active ? uiText("removeFavorite", "นำออกจากรายการโปรด") : uiText("addFavorite", "เพิ่มเป็นรายการโปรด");
+    return `<button class="favorite-button${detail ? " favorite-button--detail" : ""}" type="button" data-favorite-id="${product.id}" aria-pressed="${active}" aria-label="${label}: ${escapeHtml(product.name)}"><span aria-hidden="true">${active ? "♥" : "♡"}</span></button>`;
+  }
   function productCard(product) {
     const inCart = store.getCart().find((item) => item.id === product.id)?.qty || 0;
     const maxed = product.stock <= 0 || inCart >= product.stock;
     return `<article class="product-card" data-product-id="${product.id}">
       <a class="product-visual" data-no-i18n href="product.html?id=${product.id}" aria-label="${window.PAPUI?.language === "en" ? "View" : "ดู"} ${escapeHtml(product.name)}">${visual(product)}</a>
+      ${favoriteButton(product)}
       <div class="product-info"><small class="product-kicker"><span>${escapeHtml(categoryLabel(product.category))}</span>${petBadge(product.petType)}</small><h3><a data-no-i18n href="product.html?id=${product.id}">${escapeHtml(product.name)}</a></h3>
       <p data-no-i18n>${escapeHtml(product.description)}</p><div class="stock ${product.stock <= 0 ? "out" : ""}">${product.stock <= 0 ? uiText("outStock", "Out of Stock") : uiText("inStock", `In Stock: ${product.stock}`).replace("{count}", product.stock)}</div><div class="in-cart" data-in-cart>${inCart ? uiText("inCart", `In Cart: ${inCart}`).replace("{count}", inCart) : uiText("notInCart", "Not in cart")}</div><div class="product-bottom"><strong>${money(product.price)}</strong>
       <button class="icon-button add-cart" data-id="${product.id}" aria-label="${window.PAPUI?.language === "en" ? "Add" : "เพิ่ม"} ${escapeHtml(product.name)} ${window.PAPUI?.language === "en" ? "to cart" : "ลงตะกร้า"}" ${maxed ? "disabled" : ""}>＋</button></div><div class="card-feedback" aria-live="polite">${product.stock > 0 && inCart >= product.stock ? uiText("stockLimit", "Stock limit reached") : ""}</div></div>
     </article>`;
+  }
+  function updateFavoriteState(id) {
+    document.querySelectorAll(id ? `[data-favorite-id="${id}"]` : "[data-favorite-id]").forEach((button) => {
+      const product = store.getProducts().find((item) => item.id === Number(button.dataset.favoriteId)); if (!product) { button.remove(); return; }
+      const active = store.isFavorite(product.id); button.setAttribute("aria-pressed", String(active)); button.setAttribute("aria-label", `${active ? uiText("removeFavorite", "นำออกจากรายการโปรด") : uiText("addFavorite", "เพิ่มเป็นรายการโปรด")}: ${product.name}`); button.firstElementChild.textContent = active ? "♥" : "♡";
+    });
   }
   function updateCartCount() {
     document.querySelectorAll("[data-cart-count]").forEach((node) => { const count = store.cartCount(); if (node.textContent !== String(count)) { node.textContent = count; node.classList.remove("badge-bounce"); void node.offsetWidth; node.classList.add("badge-bounce"); } });
@@ -111,6 +122,8 @@
   }
   function bindShared() {
     document.addEventListener("click", (event) => {
+      const favorite = event.target.closest("[data-favorite-id]");
+      if (favorite) { const id = Number(favorite.dataset.favoriteId); const active = store.toggleFavorite(id); updateFavoriteState(id); toast(active ? uiText("favoriteSaved", "เก็บไว้ในรายการโปรดแล้ว") : uiText("favoriteRemoved", "นำออกจากรายการโปรดแล้ว")); return; }
       const button = event.target.closest(".add-cart");
       if (!button) return;
       const id = Number(button.dataset.id); const card = button.closest(".product-card");
@@ -120,6 +133,7 @@
       } else { toast(uiText("stockLimit", "Stock limit reached")); }
     });
     window.addEventListener("pap-cart-change", () => { updateCartCount(); updateProductCartState(); });
+    window.addEventListener("pap-favorites-change", (event) => updateFavoriteState(event.detail?.id));
     updateCartCount(); bindHiddenAdmin();
   }
   function renderHome() {
@@ -145,6 +159,7 @@
     const baseCategories = ["Food","Treats","Toys","Beds","Grooming","Clothing","Accessories","Health & Care","Other"];
     const catCategories = ["Cat Litter","Litter Box","Cat Toilet"];
     const categories = mode === "dog" ? baseCategories : [...baseCategories, ...catCategories];
+    const petTypes = mode === "cat" ? ["cat","both"] : mode === "dog" ? ["dog","both"] : ["cat","dog","both"];
     const filterBar = document.querySelector(".filters");
     const eligibleForMode = (item) => mode === "both" || item.petType === mode || item.petType === "both";
     const featuredOnly = new URLSearchParams(location.search).get("featured") === "1";
@@ -154,28 +169,54 @@
     const storageKey = `pap-product-filters-${mode}${featuredOnly ? "-featured" : ""}`; const params = new URLSearchParams(location.search);
     if (params.get("reset") === "1") { sessionStorage.removeItem(storageKey); history.replaceState({}, "", `${location.pathname}${location.hash}`); }
     let saved = {}; try { saved = JSON.parse(sessionStorage.getItem(storageKey)) || {}; } catch {}
-    const state = { category:categories.includes(saved.category) ? saved.category : "all", age:["all","young","adult","senior"].includes(saved.age) ? saved.age : "all", search:String(saved.search || ""), min:Math.max(availableMin, Number(saved.min) || availableMin), max:Math.min(availableMax, Number(saved.max) || availableMax) };
+    const state = {
+      category:categories.includes(saved.category) ? saved.category : "all", petType:petTypes.includes(saved.petType) ? saved.petType : "all",
+      age:["all","young","adult","senior"].includes(saved.age) ? saved.age : "all", stock:["all","in","out"].includes(saved.stock) ? saved.stock : "all",
+      sort:["default","price-asc","price-desc","name","newest"].includes(saved.sort) ? saved.sort : "default", favoritesOnly:Boolean(saved.favoritesOnly),
+      search:String(saved.search || ""), min:Math.max(availableMin, Number.isFinite(Number(saved.min)) ? Number(saved.min) : availableMin), max:Math.min(availableMax, Number.isFinite(Number(saved.max)) ? Number(saved.max) : availableMax)
+    };
     if (state.min > state.max) { state.min = availableMin; state.max = availableMax; }
     const youngLabel = mode === "cat" ? "Kitten" : mode === "dog" ? "Puppy" : "Puppy / Kitten";
-    filterBar.innerHTML = `<div class="category-chips">${[`<button class="filter-button" data-category="all">${uiText("allProducts", "All Products")}</button>`, ...categories.map((category) => `<button class="filter-button" data-category="${escapeHtml(category)}">${escapeHtml(categoryLabel(category))}</button>`)].join("")}</div><div class="filter-tools"><label class="age-filter">${uiText("age", "Age")}<select><option value="all">${window.PAPUI?.language === "en" ? "All Ages" : "ทุกช่วงวัย"}</option><option value="young">${window.PAPUI?.language === "en" ? youngLabel : mode === "cat" ? "ลูกแมว" : mode === "dog" ? "ลูกสุนัข" : "ลูกสุนัข / ลูกแมว"}</option><option value="adult">${uiText("adult", "Adult")}</option><option value="senior">${uiText("senior", "Senior")}</option></select></label><label class="age-filter">${uiText("search", "Search")}<input data-product-search type="search" value="${escapeHtml(state.search)}" placeholder="${window.PAPUI?.language === "en" ? "Search products" : "ค้นหาสินค้า"}"></label><div class="price-filter"><div><span>${uiText("priceRange", "Price Range")}</span><strong data-price-output></strong></div><div class="dual-range"><div class="range-track"></div><input data-price-min type="range" min="${availableMin}" max="${availableMax}" value="${state.min}"><input data-price-max type="range" min="${availableMin}" max="${availableMax}" value="${state.max}"></div></div><button class="reset-filters" type="button">${window.PAPUI?.language === "en" ? "Reset Filters" : "ล้างตัวกรอง"}</button></div>`;
-    const buttons = filterBar.querySelectorAll("[data-category]"); const ageSelect = filterBar.querySelector("select"); const searchInput = filterBar.querySelector("[data-product-search]"); const minInput = filterBar.querySelector("[data-price-min]"); const maxInput = filterBar.querySelector("[data-price-max]"); const priceOutput = filterBar.querySelector("[data-price-output]");
-    ageSelect.value = state.age;
+    const petOptions = petTypes.map((type) => `<option value="${type}">${type === "cat" ? uiText("catOnly", "Cat") : type === "dog" ? uiText("dogOnly", "Dog") : uiText("bothOnly", "Both")}</option>`).join("");
+    filterBar.innerHTML = `<div class="category-chips">${[`<button class="filter-button" data-category="all">${uiText("allProducts", "All Products")}</button>`, ...categories.map((category) => `<button class="filter-button" data-category="${escapeHtml(category)}">${escapeHtml(categoryLabel(category))}</button>`)].join("")}</div><div class="filter-tools">
+      <label class="age-filter discovery-search">${uiText("search", "Search")}<span><input data-product-search type="search" value="${escapeHtml(state.search)}" placeholder="${uiText("searchPlaceholder", "ค้นหาชื่อ รายละเอียด หรือหมวดหมู่")}"><button type="button" data-clear-search aria-label="${uiText("clearSearch", "ล้างคำค้นหา")}">×</button></span></label>
+      <label class="age-filter">${uiText("petType", "Pet Type")}<select data-pet-filter><option value="all">${uiText("allRelevantPets", "All relevant pets")}</option>${petOptions}</select></label>
+      <label class="age-filter">${uiText("age", "Age")}<select data-age-filter><option value="all">${window.PAPUI?.language === "en" ? "All Ages" : "ทุกช่วงวัย"}</option><option value="young">${window.PAPUI?.language === "en" ? youngLabel : mode === "cat" ? "ลูกแมว" : mode === "dog" ? "ลูกสุนัข" : "ลูกสุนัข / ลูกแมว"}</option><option value="adult">${uiText("adult", "Adult")}</option><option value="senior">${uiText("senior", "Senior")}</option></select></label>
+      <label class="age-filter">${uiText("stock", "Stock")}<select data-stock-filter><option value="all">${uiText("allStock", "All stock")}</option><option value="in">${uiText("inStockOnly", "In stock")}</option><option value="out">${uiText("outStock", "Out of Stock")}</option></select></label>
+      <label class="age-filter">${uiText("sort", "Sort")}<select data-sort><option value="default">${uiText("recommended", "Recommended")}</option><option value="price-asc">${uiText("priceLowHigh", "Price: Low to High")}</option><option value="price-desc">${uiText("priceHighLow", "Price: High to Low")}</option><option value="name">${uiText("nameAZ", "Name: A to Z")}</option><option value="newest">${uiText("newest", "Newest")}</option></select></label>
+      <div class="price-filter"><div><span>${uiText("priceRange", "Price Range")}</span><strong data-price-output></strong></div><div class="dual-range"><div class="range-track"></div><input data-price-min type="range" min="${availableMin}" max="${availableMax}" value="${state.min}"><input data-price-max type="range" min="${availableMin}" max="${availableMax}" value="${state.max}"></div></div>
+      <div class="favorite-filter-wrap"><button class="favorite-filter" type="button" data-favorites-only aria-pressed="${state.favoritesOnly}">♥ ${uiText("favoritesOnly", "Favorites only")}</button><small>${uiText("favoritesDeviceOnly", "บันทึกเฉพาะในอุปกรณ์นี้ ไม่ซิงก์กับบัญชี")}</small></div>
+      <button class="reset-filters" type="button">${uiText("resetFilters", "ล้างตัวกรอง")}</button>
+    </div><p class="discovery-status" aria-live="polite"></p>`;
+    const buttons = filterBar.querySelectorAll("[data-category]"); const ageSelect = filterBar.querySelector("[data-age-filter]"); const petSelect = filterBar.querySelector("[data-pet-filter]"); const stockSelect = filterBar.querySelector("[data-stock-filter]"); const sortSelect = filterBar.querySelector("[data-sort]"); const searchInput = filterBar.querySelector("[data-product-search]"); const clearSearch = filterBar.querySelector("[data-clear-search]"); const favoriteFilter = filterBar.querySelector("[data-favorites-only]"); const minInput = filterBar.querySelector("[data-price-min]"); const maxInput = filterBar.querySelector("[data-price-max]"); const priceOutput = filterBar.querySelector("[data-price-output]"); const status = filterBar.querySelector(".discovery-status");
+    ageSelect.value = state.age; petSelect.value = state.petType; stockSelect.value = state.stock; sortSelect.value = state.sort;
     const saveAndDraw = () => {
       sessionStorage.setItem(storageKey, JSON.stringify(state));
       buttons.forEach((button) => button.classList.toggle("active", button.dataset.category === state.category));
-      ageSelect.value = state.age; minInput.value = state.min; maxInput.value = state.max; priceOutput.textContent = `${money(state.min)} — ${money(state.max)}`;
+      ageSelect.value = state.age; petSelect.value = state.petType; stockSelect.value = state.stock; sortSelect.value = state.sort; minInput.value = state.min; maxInput.value = state.max; priceOutput.textContent = `${money(state.min)} — ${money(state.max)}`; clearSearch.hidden = !state.search; favoriteFilter.setAttribute("aria-pressed", String(state.favoritesOnly));
       const span = Math.max(1, availableMax - availableMin); const left = ((state.min - availableMin) / span) * 100; const right = 100 - ((state.max - availableMin) / span) * 100; filterBar.style.setProperty("--range-left", `${left}%`); filterBar.style.setProperty("--range-right", `${right}%`);
       const search = state.search.trim().toLowerCase();
-      const list = eligible.filter((item) => (state.category === "all" || item.category === state.category) && (state.age === "all" || item.ageGroup === state.age || item.ageGroup === "all") && (!search || `${item.name} ${item.description}`.toLowerCase().includes(search)) && item.price >= state.min && item.price <= state.max);
-      grid.innerHTML = list.length ? list.map(productCard).join("") : `<p class="empty-state">${uiText("noCategoryProducts", "ยังไม่มีสินค้าในหมวดนี้")}</p>`;
-      updateProductCartState();
+      const favorites = new Set(store.getFavorites());
+      let list = eligible.filter((item) => (state.category === "all" || item.category === state.category) && (state.petType === "all" || item.petType === state.petType) && (state.age === "all" || item.ageGroup === state.age || item.ageGroup === "all") && (state.stock === "all" || (state.stock === "in" ? item.stock > 0 : item.stock <= 0)) && (!state.favoritesOnly || favorites.has(item.id)) && (!search || `${item.name} ${item.description} ${item.category}`.toLowerCase().includes(search)) && item.price >= state.min && item.price <= state.max);
+      const sorters = { "price-asc":(a,b)=>a.price-b.price, "price-desc":(a,b)=>b.price-a.price, name:(a,b)=>a.name.localeCompare(b.name, window.PAPUI?.language || "th", { sensitivity:"base" }), newest:(a,b)=>(Date.parse(b.createdAt)||0)-(Date.parse(a.createdAt)||0)||b.id-a.id };
+      if (sorters[state.sort]) list = [...list].sort(sorters[state.sort]);
+      const emptyMessage = state.favoritesOnly ? uiText("noFavorites", "ยังไม่มีของโปรดในอุปกรณ์นี้") : search ? uiText("noSearchResults", "ดมหาแล้ว แต่ยังไม่เจอสินค้าที่ตรงกัน") : uiText("noCategoryProducts", "ยังไม่มีสินค้าในหมวดนี้");
+      grid.innerHTML = list.length ? list.map(productCard).join("") : `<div class="empty-state discovery-empty"><div class="big-emoji">🐾</div><h2>${emptyMessage}</h2><p>${uiText("tryFilters", "ลองเปลี่ยนคำค้นหาหรือตัวกรองดูนะ")}</p></div>`;
+      status.textContent = search ? uiText("searchCount", "กำลังดมหาของให้น้อง... เจอ {count} ชิ้น").replace("{count}", list.length) : uiText("productCount", "พบสินค้า {count} ชิ้น").replace("{count}", list.length);
+      updateProductCartState(); updateFavoriteState();
     };
     buttons.forEach((button) => button.addEventListener("click", () => { state.category = button.dataset.category; saveAndDraw(); }));
     ageSelect.addEventListener("change", () => { state.age = ageSelect.value; saveAndDraw(); });
+    petSelect.addEventListener("change", () => { state.petType = petSelect.value; saveAndDraw(); });
+    stockSelect.addEventListener("change", () => { state.stock = stockSelect.value; saveAndDraw(); });
+    sortSelect.addEventListener("change", () => { state.sort = sortSelect.value; saveAndDraw(); });
     searchInput.addEventListener("input", () => { state.search = searchInput.value; saveAndDraw(); });
+    clearSearch.addEventListener("click", () => { state.search = ""; searchInput.value = ""; searchInput.focus(); saveAndDraw(); });
+    favoriteFilter.addEventListener("click", () => { state.favoritesOnly = !state.favoritesOnly; saveAndDraw(); });
     minInput.addEventListener("input", () => { state.min = Math.min(Number(minInput.value), state.max); saveAndDraw(); });
     maxInput.addEventListener("input", () => { state.max = Math.max(Number(maxInput.value), state.min); saveAndDraw(); });
-    filterBar.querySelector(".reset-filters").addEventListener("click", () => { state.category="all"; state.age="all"; state.search=""; searchInput.value=""; state.min=availableMin; state.max=availableMax; saveAndDraw(); });
+    filterBar.querySelector(".reset-filters").addEventListener("click", () => { Object.assign(state,{ category:"all",petType:"all",age:"all",stock:"all",sort:"default",favoritesOnly:false,search:"",min:availableMin,max:availableMax }); searchInput.value=""; saveAndDraw(); });
+    window.addEventListener("pap-favorites-change", saveAndDraw);
     saveAndDraw();
   }
   function renderDetail() {
@@ -184,7 +225,7 @@
     if (!product) { root.innerHTML = `<div class="empty-state"><h2>${uiText("productMissing", "ไม่พบสินค้านี้")}</h2><a class="button" href="products.html">${uiText("backToProducts", "กลับไปเลือกสินค้า")}</a></div>`; return; }
     document.title = `${product.name} — PAP`;
     const inCart = store.getCart().find((item) => item.id === product.id)?.qty || 0;
-    root.innerHTML = `<div class="detail-visual">${visual(product, true)}</div><div class="detail-copy" data-detail-id="${product.id}"><small><span data-no-i18n>${escapeHtml(product.category)}</span> · ${label(product.petType)}</small>
+    root.innerHTML = `<div class="detail-visual">${visual(product, true)}</div><div class="detail-copy" data-detail-id="${product.id}">${favoriteButton(product, true)}<small><span data-no-i18n>${escapeHtml(product.category)}</span> · ${label(product.petType)}</small>
       <h1 data-no-i18n>${escapeHtml(product.name)}</h1><p data-no-i18n>${escapeHtml(product.description)}</p><dl class="product-meta"><div><dt>${uiText("petType", "Pet Type")}</dt><dd>${label(product.petType)}</dd></div><div><dt>${uiText("stock", "Stock")}</dt><dd>${uiText("items", `${product.stock} items`).replace("{count}", product.stock)}</dd></div></dl><strong class="detail-price">${money(product.price)}</strong>
       <div class="in-cart" data-in-cart>${inCart ? uiText("inCart", `In Cart: ${inCart}`).replace("{count}", inCart) : uiText("notInCart", "Not in cart")}</div><button class="button add-cart" data-id="${product.id}" ${product.stock <= 0 || inCart >= product.stock ? "disabled" : ""}>${product.stock <= 0 ? uiText("outStock", "Out of Stock") : inCart >= product.stock ? uiText("stockLimit", "Stock limit reached") : uiText("addCart", "เพิ่มลงตะกร้า ＋")}</button></div>`;
   }
