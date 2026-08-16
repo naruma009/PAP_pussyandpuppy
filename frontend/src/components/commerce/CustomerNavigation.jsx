@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, useState } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useCommerce } from "../../features/commerce/CommerceProvider";
 import { usePreferences } from "../../features/preferences/PreferenceProvider";
 
@@ -29,5 +29,5 @@ export default function CustomerNavigation() {
     setLogoutError("");
     try { await logout(); setOpen(false); navigate("/home"); } catch (error) { setLogoutError(error.message); }
   };
-  return <div className="customer-account" ref={root}><button ref={trigger} className="customer-trigger" type="button" aria-expanded={open} aria-controls={panelId} onClick={() => setOpen((value) => !value)}>{language === "en" ? "Hi" : "สวัสดี"}, <span>{customer.name}</span> <span aria-hidden="true">⌄</span></button>{open && <div className="customer-menu" id={panelId}><div className="customer-summary"><strong>{customer.name}</strong><small>{customer.email}</small></div><button type="button" onClick={signOut}>{t("logout")}</button>{logoutError && <p role="alert">{logoutError}</p>}</div>}</div>;
+  return <div className="customer-account" ref={root}><button ref={trigger} className="customer-trigger" type="button" aria-expanded={open} aria-controls={panelId} onClick={() => setOpen((value) => !value)}>{language === "en" ? "Hi" : "สวัสดี"}, <span>{customer.name}</span> <span aria-hidden="true">⌄</span></button>{open && <div className="customer-menu" id={panelId}><div className="customer-summary"><strong>{customer.name}</strong><small>{customer.email}</small></div><Link to="/account/orders" onClick={() => setOpen(false)}>{t("myOrders")}</Link><button type="button" onClick={signOut}>{t("logout")}</button>{logoutError && <p role="alert">{logoutError}</p>}</div>}</div>;
 }

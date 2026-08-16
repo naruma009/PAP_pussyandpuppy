@@ -3,9 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { useCommerce } from "../features/commerce/CommerceProvider";
 import { usePreferences } from "../features/preferences/PreferenceProvider";
 
-function loginDestination() {
+export function loginDestination() {
   const target = sessionStorage.getItem("pap-after-login");
-  return target === "checkout.html" || target === "/checkout" ? "/checkout" : "/home";
+  if (target === "checkout.html" || target === "/checkout") return "/checkout";
+  if (target === "/account/orders") return target;
+  return "/home";
 }
 
 export default function LoginPage() {

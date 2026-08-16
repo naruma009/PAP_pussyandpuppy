@@ -9,13 +9,15 @@ export class ApiError extends Error {
 }
 
 export async function apiRequest(path, options = {}) {
+  const { expectedStatus, ...fetchOptions } = options;
   const response = await fetch(`${apiBase}${path}`, {
     credentials: "same-origin",
-    ...options,
+    ...fetchOptions,
   });
-  if (response.status === 204) return null;
+  const unexpectedStatus = expectedStatus !== undefined && response.status !== expectedStatus;
+  if (response.status === 204 && !unexpectedStatus) return null;
   const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw new ApiError(data.error || `Request failed (${response.status})`, response.status);
+  if (!response.ok || unexpectedStatus) throw new ApiError(data.error || `Request failed (${response.status})`, response.status);
   return data;
 }
 
@@ -37,4 +39,12 @@ export async function loginCustomer(customer, signal) {
 
 export async function logoutCustomer(signal) {
   return apiRequest("/customer/logout", { method: "POST", signal });
+}
+
+export async function createOrder(payload) {
+  return apiRequest("/orders", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload), expectedStatus: 201 });
+}
+
+export async function getCustomerOrders(signal) {
+  return apiRequest("/customer/orders", { signal });
 }

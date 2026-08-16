@@ -89,6 +89,14 @@ export default function CommerceProvider({ children }) {
       return result;
     },
     removeFromCart(id) { if (cart !== null) save(removeCartItem(cart, Number(id))); },
+    clearCart() {
+      setCart([]);
+      try { writeCart([]); } catch { /* The confirmed server order remains successful. */ }
+    },
+    expireCustomerSession() {
+      invalidateSession();
+      setCustomer(null); setCustomerStatus("ready"); setSessionError(null);
+    },
     async login(credentials) {
       const { controller, version } = beginAuthMutation();
       setCustomerStatus("loading"); setSessionError(null);
@@ -121,7 +129,7 @@ export default function CommerceProvider({ children }) {
         if (authController.current === controller) authController.current = null;
       }
     },
-  }), [cart, products, customer, customerStatus, sessionError, notice, announce, beginAuthMutation, save]);
+  }), [cart, products, customer, customerStatus, sessionError, notice, announce, beginAuthMutation, invalidateSession, save]);
 
   return <CommerceContext.Provider value={value}>{children}</CommerceContext.Provider>;
 }

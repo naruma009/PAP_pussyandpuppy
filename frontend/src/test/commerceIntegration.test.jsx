@@ -77,7 +77,7 @@ it("maps pap-after-login checkout.html through login to the guarded checkout pla
   await user.click(screen.getByRole("button", { name: "เข้าสู่ระบบแบบ Demo" }));
   await waitFor(() => expect(router.state.location.pathname).toBe("/checkout"));
   expect(sessionStorage.getItem("pap-after-login")).toBeNull();
-  expect(await screen.findByRole("heading", { name: "checkout" })).toBeInTheDocument();
+  expect(await screen.findByRole("button", { name: "ยืนยันคำสั่งซื้อ" })).toBeInTheDocument();
   expect(fetchMock.mock.calls.some(([url]) => String(url).includes("/orders"))).toBe(false);
 });
 
@@ -95,7 +95,7 @@ it("guards direct checkout for anonymous, empty-cart, and authenticated nonempty
 
   localStorage.setItem("pap-cart", JSON.stringify([{ id: 1, qty: 1 }]));
   view = renderCommerce("/checkout", { name: "Buyer", email: "buyer@example.com" });
-  expect(await screen.findByRole("heading", { name: "checkout" })).toBeInTheDocument();
+  expect(await screen.findByRole("button", { name: "ยืนยันคำสั่งซื้อ" })).toBeInTheDocument();
   expect(view.router.state.location.pathname).toBe("/checkout");
 });
 

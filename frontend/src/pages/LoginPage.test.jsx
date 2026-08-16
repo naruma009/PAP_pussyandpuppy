@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { expect, it, vi } from "vitest";
-import LoginPage from "./LoginPage";
+import LoginPage, { loginDestination } from "./LoginPage";
 
 const login = vi.fn();
 const translate = (key) => ({ login: "Login", loginTitle: "Join", demoLoginNote: "Demo", nickname: "Nickname", nicknameExample: "Name", email: "Email", signingIn: "Signing in", demoLogin: "Demo Login" }[key] || key);
@@ -18,4 +18,11 @@ it("shows login API errors and preserves pap-after-login", async () => {
   await userEvent.click(screen.getByRole("button", { name: "Demo Login" }));
   expect(await screen.findByText("Name and valid email are required")).toBeInTheDocument();
   expect(sessionStorage.getItem("pap-after-login")).toBe("checkout.html");
+});
+
+it("allowlists checkout and account orders destinations", () => {
+  for (const [saved, expected] of [["checkout.html", "/checkout"], ["/checkout", "/checkout"], ["/account/orders", "/account/orders"], ["https://evil.example", "/home"], ["/admin", "/home"]]) {
+    sessionStorage.setItem("pap-after-login", saved);
+    expect(loginDestination()).toBe(expected);
+  }
 });

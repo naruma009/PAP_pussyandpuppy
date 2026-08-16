@@ -22,6 +22,7 @@ it("uses a semantic dropdown and restores trigger focus on Escape", async () => 
   expect(trigger).toHaveAttribute("aria-controls");
   expect(screen.queryByRole("menu")).not.toBeInTheDocument();
   expect(screen.getByText("buyer@example.com")).toBeInTheDocument();
+  expect(screen.getByRole("link", { name: "myOrders" })).toHaveAttribute("href", "/account/orders");
   await user.keyboard("{Escape}");
   expect(screen.queryByRole("button", { name: "Logout" })).not.toBeInTheDocument();
   expect(trigger).toHaveFocus();

@@ -4,12 +4,12 @@ import HealthPage from "./pages/HealthPage";
 import HomePage from "./pages/HomePage";
 import NotFoundPage from "./pages/NotFoundPage";
 import PetSelectionPage from "./pages/PetSelectionPage";
-import PlaceholderPage from "./pages/PlaceholderPage";
 import ProductDetailPage from "./pages/ProductDetailPage";
 import ProductsPage from "./pages/ProductsPage";
 import CartPage from "./pages/CartPage";
 import LoginPage from "./pages/LoginPage";
-import CheckoutGuard from "./features/commerce/CheckoutGuard";
+import CheckoutPage from "./pages/CheckoutPage";
+import CustomerOrdersPage from "./pages/CustomerOrdersPage";
 
 function LegacyProductAlias() {
   const [params] = useSearchParams();
@@ -37,8 +37,8 @@ export const routes = [
       { path: "products/:productId", element: <ProductDetailPage /> },
       { path: "cart", element: <CartPage /> },
       { path: "login", element: <LoginPage /> },
-      { path: "checkout", element: <CheckoutGuard><PlaceholderPage page="checkout" /></CheckoutGuard> },
-      { path: "account/orders", element: <PlaceholderPage page="customer orders" /> },
+      { path: "checkout", element: <CheckoutPage /> },
+      { path: "account/orders", element: <CustomerOrdersPage /> },
       { path: "health", element: <HealthPage /> },
       { path: "home.html", element: <LegacyAlias to="/home" /> },
       { path: "products.html", element: <LegacyAlias to="/products" /> },
