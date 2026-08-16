@@ -1,21 +1,16 @@
 document.addEventListener("DOMContentLoaded", () => {
   const store = window.PAPStore;
-  let audioContext;
   const horrorStyles = document.createElement("link"); horrorStyles.rel = "stylesheet"; horrorStyles.href = "css/horror-scene.css"; document.head.append(horrorStyles);
-  const soundButton = document.createElement("button"); soundButton.className = "landing-sound"; soundButton.type = "button"; document.body.append(soundButton);
-  const soundOn = () => localStorage.getItem("pap-sound") === "on";
-  const updateSound = () => { soundButton.textContent = soundOn() ? "🔊" : "🔇"; soundButton.setAttribute("aria-label", soundOn() ? "Sound On — turn off" : "Sound Off — turn on"); };
-  const playSound = (frequency = 560) => { if (!soundOn()) return; const Engine = window.AudioContext || window.webkitAudioContext; if (!Engine) return; audioContext ||= new Engine(); const oscillator = audioContext.createOscillator(); const gain = audioContext.createGain(); oscillator.frequency.value = frequency; gain.gain.setValueAtTime(.04, audioContext.currentTime); gain.gain.exponentialRampToValueAtTime(.0001, audioContext.currentTime + .14); oscillator.connect(gain).connect(audioContext.destination); oscillator.start(); oscillator.stop(audioContext.currentTime + .15); };
-  soundButton.addEventListener("click", () => { localStorage.setItem("pap-sound", soundOn() ? "off" : "on"); updateSound(); playSound(700); }); updateSound();
+  const playSound = (type = "click", species = store.getMode()) => window.PAPUI?.sound(type, species);
   document.querySelectorAll("[data-mode]").forEach((card) => card.addEventListener("click", () => {
-    const mode = card.dataset.mode; store.setMode(mode); playSound(mode === "cat" ? 680 : mode === "dog" ? 480 : 580);
+    const mode = card.dataset.mode; store.setMode(mode); playSound("click", mode);
     card.classList.add("chosen"); document.body.classList.add("leaving");
     setTimeout(() => { location.href = "home.html"; }, 850);
   }));
   document.querySelector("#secret-button").addEventListener("click", enterHorrorMode, { once: true });
 
   function enterHorrorMode() {
-    playSound(95);
+    playSound("chaos");
     document.body.classList.add("entering-horror");
     setTimeout(() => document.body.classList.add("horror-drain"), 450);
     setTimeout(() => document.body.classList.add("horror-fade"), 1450);

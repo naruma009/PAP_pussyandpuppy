@@ -6,6 +6,10 @@ const PET_REPLIES = {
   cat:["ครืดด...", "ตรงนั้นแหละ", "อย่าหยุดนะ", "วันนี้ยอมก็ได้"],
   dog:["ชอบที่สุด!", "ลูบอีก!", "เย้ เย้!", "เป็นเพื่อนกันแล้วนะ"]
 };
+const EN_REPLIES = {
+  feed:{ cat:["Meowww~", "More!", "Acceptable.", "This is mine now.", "Meow!"], dog:["Woof!", "Can I have more?", "Yay!", "Delicious!", "Bow-wow!"] },
+  pet:{ cat:["Purrr...", "Right there.", "Don't stop.", "I'll allow it today."], dog:["My favorite!", "More pets!", "Yay, yay!", "We're best friends now!"] }
+};
 const QUESTION_POOLS = {
   cat:[
     { text:"ช่วงนี้น้องจ้องกำแพงนานผิดปกติไหม?", answers:[{ text:"ไม่เลย กำแพงยังปลอดภัย", mood:"sleepy", weight:2 },{ text:"บางครั้ง เหมือนกำลังรับสัญญาณ", mood:"domination", weight:2 },{ text:"นานจนกำแพงสารภาพ", mood:"judge", weight:3 }] },
@@ -44,6 +48,18 @@ const MOOD_POOLS = {
     security:{ title:"น้องคือหัวหน้าฝ่ายรักษาความปลอดภัย", description:"ทุกเสียงต้องผ่านการตรวจสอบ แม้กระทั่งเสียงตู้เย็น", badge:"Security Chief", meter:72, categories:["Accessories"] }
   }
 };
+const EN_QUESTION_TEXT = {
+  cat:["Has your cat been staring at the wall suspiciously long?", "What does your cat do first when a box appears?", "Does your cat look at you like a performance reviewer?", "How does your cat respond when called?", "What is your cat doing at 3 AM?", "What happens when your cat spots an empty high shelf?", "Which object is most welcome in your cat's home?", "What if the food bowl is empty four minutes early?"],
+  dog:["How fast does your dog arrive after hearing a snack bag?", "How excited is your dog when you come home?", "Is a stranger a friend or an intruder?", "How much of the favorite toy still exists?", "What happens when you say “go out”?", "Which system activates first when food is detected far away?", "What job does your dog take when there is a noise outside at night?", "What does your dog's dream day off look like?"]
+};
+const EN_ANSWERS = {
+  sleepy:["The wall remains safe.", "A dignified nap.", "Already asleep."], judge:["One-millimeter ear movement.", "A formal review is underway.", "A complaint has been filed."], domination:["Receiving secret signals.", "Compensation may be required.", "The takeover plan begins."], "new-home":["Enter immediately; no manual needed.", "The box is prime real estate.", "Every delivery box."], energy:["Turbo mode activated.", "Fourteen victory laps.", "Only a memory remains."],
+  snack:["Snack radar activated.", "Arrived before the bag opened.", "Unlimited snack buffet."], friend:["Definitely a new friend.", "A very polite tail wag.", "Meet everyone at the park."], security:["ID check first.", "Notify the entire neighborhood.", "Head of Security."], travel:["Waiting at the door already.", "Leash ready for inspection.", "Adventure starts now."]
+};
+const EN_MOODS = {
+  cat:{ sleepy:["Your cat wants to sleep for 23 hours","The remaining hour is reserved for moving from the bed into a box."], judge:["Your cat is reviewing human performance","Scores are confidential, but serving meals on time may help."], domination:["Your cat is plotting world domination","The plan is classified. One toy may buy humanity more time."], "new-home":["Your cat requires a new box","The old home works, but feline real-estate standards change weekly."], energy:["3 AM energy detected","Prepare for unexplained hallway sprints."] },
+  dog:{ friend:["Your dog believes everyone is a friend","Including the courier, the neighbors, and leaves passing the door."], snack:["Long-range snack detection is online","More accurate than radar and active around the clock."], energy:["Energy level exceeds 300%","Release it safely before the sofa volunteers."], travel:["Your dog needs an adventure right now","Leash ready, tail ready; only the human is still putting on shoes."], security:["Your dog is Head of Security","Every sound requires inspection, including the refrigerator."] }
+};
 const randomItem = (items) => items[Math.floor(Math.random() * items.length)];
 const randomBetween = (minimum, maximum) => minimum + Math.floor(Math.random() * (maximum - minimum + 1));
 const sampleQuestions = (questions, count = 3) => {
@@ -53,9 +69,11 @@ const sampleQuestions = (questions, count = 3) => {
 };
 
 export function createPetPersonality({ mode, controllers, products, sound, mobile, reducedMotion, createChaosSwarm }) {
+  const english = window.PAPUI?.language === "en";
+  const t = (key, fallback) => window.PAPUI ? window.PAPUI.t(key) : fallback;
   const root = document.createElement("div");
   root.className = "pap-personality";
-  root.innerHTML = `<button class="pap-chaos-trigger" type="button" aria-label="ความลับ">✦</button>`;
+  root.innerHTML = `<button class="pap-chaos-trigger" type="button" aria-label="${english ? "Secret" : "ความลับ"}">✦</button>`;
   document.body.append(root);
   const moodButton = document.querySelector("[data-mood-assessment]");
   const chaosButton = root.querySelector(".pap-chaos-trigger");
@@ -83,15 +101,16 @@ export function createPetPersonality({ mode, controllers, products, sound, mobil
     removeMenu();
     if (!controller.beginInteraction(owner)) return;
     controller.showInteractionState(owner, action === "feed" ? "excited" : "relaxed");
-    bubbleFor(controller, randomItem((action === "feed" ? FEED_REPLIES : PET_REPLIES)[controller.kind]), owner);
-    sound("pet");
+    const replies = english ? EN_REPLIES[action][controller.kind] : (action === "feed" ? FEED_REPLIES : PET_REPLIES)[controller.kind];
+    bubbleFor(controller, randomItem(replies), owner);
+    sound(action === "feed" ? "feed" : "pet", controller.kind);
   };
   const openMenu = (controller) => {
     if (controller.isLocked() || chaos) return;
     removeMenu();
     menu = document.createElement("div");
     menu.className = "pap-action-menu";
-    menu.innerHTML = `<button type="button" data-pet-action="feed">🍪 ให้อาหาร</button><button type="button" data-pet-action="pet">🤍 ลูบหัว</button>`;
+    menu.innerHTML = `<button type="button" data-pet-action="feed">${t("feed", "🍪 ให้อาหาร")}</button><button type="button" data-pet-action="pet">${t("petAction", "🤍 ลูบหัว")}</button>`;
     root.append(menu);
     const rect = controller.visual.root.getBoundingClientRect();
     menu.style.left = `${Math.max(8, Math.min(innerWidth - 190, rect.left - 45))}px`;
@@ -102,7 +121,7 @@ export function createPetPersonality({ mode, controllers, products, sound, mobil
     const node = controller.visual.root;
     node.setAttribute("role", "button");
     node.setAttribute("tabindex", "0");
-    node.setAttribute("aria-label", `${controller.kind === "cat" ? "แมว" : "หมา"} PAP — เปิดเมนู interaction`);
+    node.setAttribute("aria-label", english ? `${controller.kind === "cat" ? "Cat" : "Dog"} PAP — open interaction menu` : `${controller.kind === "cat" ? "แมว" : "หมา"} PAP — เปิดเมนู interaction`);
     const onClick = () => openMenu(controller);
     const onKey = (event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); openMenu(controller); } };
     node.addEventListener("click", onClick);
@@ -118,21 +137,29 @@ export function createPetPersonality({ mode, controllers, products, sound, mobil
     root.append(overlay);
     const startQuiz = (species) => {
       const scores = {};
-      const questions = sampleQuestions(QUESTION_POOLS[species]);
+      const questions = sampleQuestions(QUESTION_POOLS[species]).map((question) => {
+        if (!english) return question;
+        const sourceIndex = QUESTION_POOLS[species].indexOf(question);
+        return { ...question, text:EN_QUESTION_TEXT[species][sourceIndex], answers:question.answers.map((answer, index) => ({ ...answer, text:EN_ANSWERS[answer.mood][index % EN_ANSWERS[answer.mood].length] })) };
+      });
       let step = 0;
       const drawResult = () => {
         const best = Math.max(...Object.values(scores));
         const candidates = Object.keys(scores).filter((key) => scores[key] >= best - 1);
-        const mood = MOOD_POOLS[species][randomItem(candidates)];
+        const moodKey = randomItem(candidates);
+        const mood = { ...MOOD_POOLS[species][moodKey] };
+        if (english) [mood.title, mood.description] = EN_MOODS[species][moodKey];
         const eligible = products.filter((product) => mood.categories.includes(product.category) && (product.petType === species || product.petType === "both"));
-        overlay.innerHTML = `<section class="pap-mood-card pap-mood-result"><button class="pap-mood-close" type="button" aria-label="ปิด">×</button><span class="pap-mood-badge">${mood.badge}</span><h2>${mood.title}</h2><p>${mood.description}</p><div class="pap-mood-meter"><i style="width:${mood.meter}%"></i></div><strong>แนะนำหมวดหมู่: ${mood.categories.join(" / ")}</strong><div class="pap-mood-products"></div></section>`;
+        const categoryNames = english ? mood.categories : mood.categories.map((category) => ({ Beds:"ที่นอน", Treats:"ขนม", Accessories:"อุปกรณ์", Toys:"ของเล่น" })[category] || category);
+        overlay.innerHTML = `<section class="pap-mood-card pap-mood-result"><button class="pap-mood-close" type="button" aria-label="${t("close", "ปิด")}">×</button><span class="pap-mood-badge">${mood.badge}</span><h2>${mood.title}</h2><p>${mood.description}</p><div class="pap-mood-meter"><i style="width:${mood.meter}%"></i></div><strong>${t("recommend", "แนะนำหมวดหมู่:")} ${categoryNames.join(" / ")}</strong><div class="pap-mood-products"></div></section>`;
         const list = overlay.querySelector(".pap-mood-products");
-        eligible.slice(0, 3).forEach((product) => { const link = document.createElement("a"); link.href = `product.html?id=${product.id}`; link.textContent = `${product.emoji || "🐾"} ${product.name}`; list.append(link); });
+        eligible.slice(0, 3).forEach((product) => { const link = document.createElement("a"); link.href = `product.html?id=${product.id}`; link.dataset.noI18n = ""; link.textContent = `${product.emoji || "🐾"} ${product.name}`; list.append(link); });
         overlay.querySelector(".pap-mood-close").addEventListener("click", closeOverlay, { once:true });
+        sound("mood", species);
       };
       const drawQuestion = () => {
         const question = questions[step];
-        overlay.innerHTML = `<section class="pap-mood-card"><button class="pap-mood-close" type="button" aria-label="ปิด">×</button><span>คำถาม ${step + 1} / ${questions.length}</span><h2>${question.text}</h2><div class="pap-mood-options"></div></section>`;
+        overlay.innerHTML = `<section class="pap-mood-card"><button class="pap-mood-close" type="button" aria-label="${t("close", "ปิด")}">×</button><span>${t("question", "คำถาม")} ${step + 1} / ${questions.length}</span><h2>${question.text}</h2><div class="pap-mood-options"></div></section>`;
         const options = overlay.querySelector(".pap-mood-options");
         question.answers.forEach((answer) => { const button = document.createElement("button"); button.type = "button"; button.textContent = answer.text; button.addEventListener("click", () => { scores[answer.mood] = (scores[answer.mood] || 0) + answer.weight; step++; step < questions.length ? drawQuestion() : drawResult(); }, { once:true }); options.append(button); });
         overlay.querySelector(".pap-mood-close").addEventListener("click", closeOverlay, { once:true });
@@ -140,7 +167,7 @@ export function createPetPersonality({ mode, controllers, products, sound, mobil
       drawQuestion();
     };
     if (mode === "both") {
-      overlay.innerHTML = `<section class="pap-mood-card pap-mood-species"><button class="pap-mood-close" type="button" aria-label="ปิด">×</button><span>PAP Mood Check</span><h2>วันนี้อยากวิเคราะห์ใคร?</h2><div class="pap-mood-options"><button type="button" data-mood-species="cat">🐱 น้องแมว</button><button type="button" data-mood-species="dog">🐶 น้องหมา</button></div></section>`;
+      overlay.innerHTML = `<section class="pap-mood-card pap-mood-species"><button class="pap-mood-close" type="button" aria-label="${t("close", "ปิด")}">×</button><span>PAP Mood Check</span><h2>${t("moodWho", "วันนี้อยากวิเคราะห์ใคร?")}</h2><div class="pap-mood-options"><button type="button" data-mood-species="cat">${t("catPet", "🐱 น้องแมว")}</button><button type="button" data-mood-species="dog">${t("dogPet", "🐶 น้องหมา")}</button></div></section>`;
       overlay.querySelector(".pap-mood-options").addEventListener("click", (event) => { const species = event.target.closest("[data-mood-species]")?.dataset.moodSpecies; if (species) startQuiz(species); });
       overlay.querySelector(".pap-mood-close").addEventListener("click", closeOverlay, { once:true });
     } else startQuiz(mode);
@@ -177,7 +204,7 @@ export function createPetPersonality({ mode, controllers, products, sound, mobil
       chaos.swarm = createChaosSwarm({ count, onComplete:stopChaos });
       chaos.timer = later(stopChaos, 9500);
     }
-    sound("pet");
+    sound("chaos", mode);
   };
   moodButton?.addEventListener("click", renderMood);
   chaosButton.addEventListener("click", startChaos);

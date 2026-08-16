@@ -3,6 +3,8 @@ import { createPetPersonality } from "./pet-personality.js";
 
 const CAT_REPLIES = ["เหมียว", "เหมียววว~", "เมี๊ยว?", "เหมียว!", "เมี๊ยววว", "...เหมียว"];
 const DOG_REPLIES = ["โฮ่ง!", "โฮ่งโฮ่ง!", "บ๊อก!", "บ๊อกบ๊อก", "โฮ่งงง", "แฮ่ก ๆ... โฮ่ง!"];
+const CAT_REPLIES_EN = ["Meow", "Meowww~", "Mrrrow?", "Meow!", "Meeeow", "...meow"];
+const DOG_REPLIES_EN = ["Woof!", "Woof woof!", "Bark!", "Bow-wow!", "Woooof", "Pant, pant... woof!"];
 const IDLE_STATES = ["idle", "sit", "sleep", "curious"];
 
 const randomItem = (items) => items[Math.floor(Math.random() * items.length)];
@@ -343,9 +345,10 @@ export function createChaosSwarm({ mode, count, mobile, onComplete }) {
 }
 
 function createChat(mode, controllers) {
+  const t = (key, fallback) => window.PAPUI ? window.PAPUI.t(key) : fallback;
   const shell = document.createElement("div");
   shell.className = "pap-pet-chat";
-  shell.innerHTML = `<button class="pap-chat-launcher" type="button" aria-expanded="false">🐾 <span>ถามน้อง PAP</span></button><section class="pap-chat-panel" hidden aria-label="PAP Pet Chat"><header><div><strong>PAP Pet Chat</strong><small>พวกน้องตอบตามภาษาของพวกน้อง — ไม่ใช่ AI</small></div><button class="pap-chat-close" type="button" aria-label="ปิด">×</button></header><div class="pap-chat-messages" aria-live="polite"></div><form><label class="sr-only" for="pap-chat-input">ข้อความถึงน้อง</label><input id="pap-chat-input" maxlength="180" autocomplete="off" placeholder="อยากรู้อะไร ถามน้องได้เลย"><button type="submit">ส่ง</button></form></section>`;
+  shell.innerHTML = `<button class="pap-chat-launcher" type="button" aria-expanded="false">🐾 <span>${t("chatAsk", "ถามน้อง PAP")}</span></button><section class="pap-chat-panel" hidden aria-label="PAP Pet Chat"><header><div><strong>PAP Pet Chat</strong><small>${t("chatNote", "พวกน้องตอบตามภาษาของพวกน้อง — ไม่ใช่ AI")}</small></div><button class="pap-chat-close" type="button" aria-label="${t("close", "ปิด")}">×</button></header><div class="pap-chat-messages" aria-live="polite"></div><form><label class="sr-only" for="pap-chat-input">${t("chatMessage", "ข้อความถึงน้อง")}</label><input id="pap-chat-input" maxlength="180" autocomplete="off" placeholder="${t("chatPlaceholder", "อยากรู้อะไร ถามน้องได้เลย")}"><button type="submit">${t("send", "ส่ง")}</button></form></section>`;
   document.body.append(shell);
   const launcher = shell.querySelector(".pap-chat-launcher");
   const panel = shell.querySelector(".pap-chat-panel");
@@ -385,10 +388,11 @@ function createChat(mode, controllers) {
     const kind = responder.kind;
     const typing = addMessage("pet", "", kind);
     typing.classList.add("pap-chat-message--typing");
-    typing.innerHTML = `<span class="pap-chat-avatar" aria-hidden="true">${kind === "cat" ? "🐱" : "🐶"}</span><span class="pap-typing-dots" aria-label="กำลังพิมพ์"><i></i><i></i><i></i></span>`;
+    typing.innerHTML = `<span class="pap-chat-avatar" aria-hidden="true">${kind === "cat" ? "🐱" : "🐶"}</span><span class="pap-typing-dots" aria-label="${t("typing", "กำลังพิมพ์")}"><i></i><i></i><i></i></span>`;
     responseTimer = window.setTimeout(() => {
       if (destroyed) return;
-      const response = randomItem(kind === "cat" ? CAT_REPLIES : DOG_REPLIES);
+      const english = window.PAPUI?.language === "en";
+      const response = randomItem(kind === "cat" ? (english ? CAT_REPLIES_EN : CAT_REPLIES) : (english ? DOG_REPLIES_EN : DOG_REPLIES));
       typing.classList.remove("pap-chat-message--typing");
       typing.classList.add("pap-chat-message--reply");
       typing.innerHTML = `<span class="pap-chat-avatar" aria-hidden="true">${kind === "cat" ? "🐱" : "🐶"}</span><span></span>`;
