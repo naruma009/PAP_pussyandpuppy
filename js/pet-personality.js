@@ -52,7 +52,7 @@ const sampleQuestions = (questions, count = 3) => {
   return pool.slice(0, count);
 };
 
-export function createPetPersonality({ mode, controllers, products, sound, mobile, reducedMotion }) {
+export function createPetPersonality({ mode, controllers, products, sound, mobile, reducedMotion, createChaosSwarm }) {
   const root = document.createElement("div");
   root.className = "pap-personality";
   root.innerHTML = `<button class="pap-chaos-trigger" type="button" aria-label="ความลับ">✦</button>`;
@@ -150,7 +150,8 @@ export function createPetPersonality({ mode, controllers, products, sound, mobil
     if (!chaos) return;
     clearTimeout(chaos.timer);
     timers.delete(chaos.timer);
-    chaos.node.remove();
+    chaos.swarm?.destroy();
+    chaos.node?.remove();
     chaos.controllers.forEach((controller) => controller.endInteraction("chaos"));
     chaos = null;
   };
@@ -158,22 +159,25 @@ export function createPetPersonality({ mode, controllers, products, sound, mobil
     if (chaos || controllers.some((controller) => controller.isLocked())) return;
     if (!controllers.every((controller) => controller.beginInteraction("chaos"))) { controllers.forEach((controller) => controller.endInteraction("chaos")); return; }
     removeMenu();
-    const node = document.createElement("div");
-    node.className = `pap-chaos ${reducedMotion ? "pap-chaos--reduced" : ""}`;
-    root.append(node);
-    const count = reducedMotion ? 4 : randomBetween(mobile ? 6 : 12, mobile ? 9 : 20);
-    for (let index = 0; index < count; index++) {
-      const pet = document.createElement("span");
-      pet.textContent = randomItem(mode === "cat" ? ["🐱"] : mode === "dog" ? ["🐶"] : ["🐱", "🐶"]);
-      pet.style.setProperty("--chaos-x", `${randomBetween(-10, 95)}vw`);
-      pet.style.setProperty("--chaos-y", `${randomBetween(5, 90)}vh`);
-      pet.style.setProperty("--chaos-delay", `${randomBetween(0, 650)}ms`);
-      pet.style.setProperty("--chaos-turn", `${randomBetween(-45, 45)}deg`);
-      node.append(pet);
+    if (reducedMotion) {
+      const node = document.createElement("div");
+      node.className = "pap-chaos pap-chaos--reduced";
+      root.append(node);
+      for (let index = 0; index < 4; index++) {
+        const pet = document.createElement("span");
+        pet.textContent = randomItem(mode === "cat" ? ["🐱"] : mode === "dog" ? ["🐶"] : ["🐱", "🐶"]);
+        pet.style.left = `${12 + index * 24}%`;
+        node.append(pet);
+      }
+      chaos = { node, swarm:null, controllers, timer:0 };
+      chaos.timer = later(stopChaos, 3000);
+    } else {
+      const count = randomBetween(mobile ? 5 : 12, mobile ? 7 : 16);
+      chaos = { node:null, swarm:null, controllers, timer:0 };
+      chaos.swarm = createChaosSwarm({ count, onComplete:stopChaos });
+      chaos.timer = later(stopChaos, 9500);
     }
-    chaos = { node, controllers, timer:0 };
     sound("pet");
-    chaos.timer = later(stopChaos, reducedMotion ? 3000 : randomBetween(3000, 6000));
   };
   moodButton?.addEventListener("click", renderMood);
   chaosButton.addEventListener("click", startChaos);

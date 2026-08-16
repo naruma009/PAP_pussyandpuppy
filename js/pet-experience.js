@@ -11,7 +11,7 @@ export const mascotKindsForMode = (mode) => mode === "both" ? ["cat", "dog"] : [
 export const chatResponderForMode = (mode) => mode === "both" ? randomItem(["cat", "dog"]) : mode;
 export const isPerchableRect = (rect, viewportHeight) => rect.width > 100 && rect.top > 82 && rect.top < viewportHeight - 105 && rect.bottom > 120;
 
-class MascotController {
+export class MascotController {
   constructor(kind, stage, index, reducedMotion, mobile) {
     this.kind = kind;
     this.index = index;
@@ -229,6 +229,119 @@ class MascotController {
   destroy() { this.destroyed = true; clearTimeout(this.timer); this.visual.root.remove(); }
 }
 
+class ChaosMascotController extends MascotController {
+  constructor(kind, stage, index, mobile, onExit) {
+    super(kind, stage, index, false, mobile);
+    this.onExit = onExit;
+    this.expiresAt = performance.now() + wait(5000, 3001);
+    this.exiting = false;
+    this.visual.root.classList.add("pap-chaos-mascot");
+    const fromLeft = index % 2 === 0;
+    this.model.x = fromLeft ? -82 : innerWidth + 18;
+    this.model.direction = fromLeft ? "right" : "left";
+    this.model.y = this.groundY();
+    this.draw();
+  }
+
+  groundY() { return 4 + (this.index % 3) * 4; }
+
+  visibleCards() {
+    return [...document.querySelectorAll(".product-card,.section,.banner,.site-footer")].filter((element, index, items) => {
+      if (items.indexOf(element) !== index) return false;
+      const rect = element.getBoundingClientRect();
+      return rect.width > 120 && rect.height > 40 && rect.top > 70 && rect.top < innerHeight - 92 && rect.bottom > 110;
+    });
+  }
+
+  start() { this.schedule(wait(80 + this.index * 55, 420)); }
+
+  next() {
+    if (this.paused || this.exiting) return;
+    if (performance.now() >= this.expiresAt) { this.exit(); return; }
+    const targets = this.visibleCards();
+    const climbChance = this.mobile ? .24 : this.kind === "cat" ? .68 : .48;
+    if (targets.length && Math.random() < climbChance) this.approachCard(targets);
+    else if (Math.random() < .78) this.walk();
+    else this.rest();
+  }
+
+  perch() {
+    if (performance.now() >= this.expiresAt) { this.exit(); return; }
+    super.perch();
+  }
+
+  walk() {
+    if (this.exiting) return;
+    if (performance.now() >= this.expiresAt) { this.exit(); return; }
+    this.targetCard = null;
+    const target = this.model.x < innerWidth / 2 ? innerWidth - wait(55, 90) : wait(12, 72);
+    const distance = Math.abs(target - this.model.x);
+    this.model.direction = target < this.model.x ? "left" : "right";
+    this.model.state = "ground-walk";
+    this.model.duration = Math.max(900, Math.min(3400, distance * (this.mobile ? 8 : 5)));
+    this.model.x = target;
+    this.model.y = this.groundY();
+    this.draw();
+    this.schedule(this.model.duration + wait(180, 520));
+  }
+
+  exit() {
+    if (this.exiting) return;
+    this.exiting = true;
+    clearTimeout(this.timer);
+    if (this.targetCard && this.cardRect()) {
+      this.targetCard = null;
+      this.model.state = "jump-down";
+      this.model.duration = 460;
+      this.model.y = this.groundY();
+      this.draw();
+      this.timer = window.setTimeout(() => this.exitGround(), 560);
+    } else this.exitGround();
+  }
+
+  exitGround() {
+    if (this.destroyed) return;
+    const target = this.model.x < innerWidth / 2 ? -90 : innerWidth + 25;
+    const distance = Math.abs(target - this.model.x);
+    this.model.direction = target < this.model.x ? "left" : "right";
+    this.model.state = "ground-walk";
+    this.model.duration = Math.max(700, Math.min(1800, distance * 4));
+    this.model.x = target;
+    this.model.y = this.groundY();
+    this.draw();
+    this.timer = window.setTimeout(() => { if (this.destroyed) return; super.destroy(); this.onExit(this); }, this.model.duration + 100);
+  }
+}
+
+export function createChaosSwarm({ mode, count, mobile, onComplete }) {
+  const stage = document.createElement("div");
+  stage.className = "pap-chaos-stage";
+  stage.setAttribute("aria-hidden", "true");
+  document.body.append(stage);
+  const active = new Set();
+  let destroyed = false;
+  let scrollFrame = 0;
+  const finish = (controller) => {
+    active.delete(controller);
+    if (!active.size && !destroyed) { cleanup(); onComplete(); }
+  };
+  const kinds = Array.from({ length:count }, (_, index) => mode === "both" ? (index % 2 ? "dog" : "cat") : mode);
+  const controllers = kinds.map((kind, index) => new ChaosMascotController(kind, stage, index, mobile, finish));
+  controllers.forEach((controller) => { controller.setPeers(controllers); active.add(controller); });
+  const onScroll = () => {
+    if (scrollFrame || destroyed) return;
+    scrollFrame = requestAnimationFrame(() => { scrollFrame = 0; controllers.forEach((controller) => controller.syncWithTarget()); });
+  };
+  const cleanup = () => {
+    removeEventListener("scroll", onScroll);
+    if (scrollFrame) cancelAnimationFrame(scrollFrame);
+    stage.remove();
+  };
+  addEventListener("scroll", onScroll, { passive:true });
+  controllers.forEach((controller) => controller.start());
+  return { controllers, stage, destroy() { if (destroyed) return; destroyed = true; controllers.forEach((controller) => controller.destroy()); active.clear(); cleanup(); } };
+}
+
 function createChat(mode, controllers) {
   const shell = document.createElement("div");
   shell.className = "pap-pet-chat";
@@ -306,7 +419,7 @@ export function initPetExperience({ mode, products = [], sound = () => {} }) {
   controllers.forEach((controller) => controller.setPeers(controllers));
   controllers.forEach((controller) => controller.start());
   const chat = createChat(mode, controllers);
-  const personality = createPetPersonality({ mode, controllers, products, sound, mobile, reducedMotion });
+  const personality = createPetPersonality({ mode, controllers, products, sound, mobile, reducedMotion, createChaosSwarm:(options) => createChaosSwarm({ ...options, mode, mobile }) });
   let pointerFrame = 0;
   const onPointerMove = (event) => {
     if (pointerFrame || mobile || reducedMotion) return;
