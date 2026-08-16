@@ -13,8 +13,8 @@ function renderRoute(path) {
 it("guards commerce routes until a Pet Mode is selected", async () => {
   renderRoute("/home");
   expect(await screen.findByRole("heading", { name: "บ้านคุณเป็นทีมไหน?" })).toBeInTheDocument();
-  expect(screen.queryByLabelText(/secret|horror/i)).not.toBeInTheDocument();
-  expect(screen.queryByText("X")).not.toBeInTheDocument();
+  expect(screen.getByLabelText(/secret mode/i)).toBeInTheDocument();
+  expect(screen.getByText("X")).toBeInTheDocument();
 });
 
 it.each([

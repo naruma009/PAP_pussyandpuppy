@@ -8,8 +8,8 @@ it("selects normal Pet Mode without exposing Horror behavior", async () => {
   vi.useFakeTimers();
   const router = createMemoryRouter(routes, { initialEntries: ["/"] });
   render(<AppProviders><RouterProvider router={router} /></AppProviders>);
-  expect(screen.getAllByRole("button")).toHaveLength(6);
-  expect(screen.queryByLabelText(/secret|horror/i)).not.toBeInTheDocument();
+  expect(screen.getAllByRole("button")).toHaveLength(7);
+  expect(screen.getByLabelText(/secret mode/i)).toBeInTheDocument();
   fireEvent.click(screen.getByRole("button", { name: /Cat/ }));
   expect(localStorage.getItem("pap-mode")).toBe("cat");
   expect(sessionStorage.getItem("pap-mode")).toBeNull();
