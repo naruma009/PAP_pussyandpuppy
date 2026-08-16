@@ -1,0 +1,30 @@
+.pap-personality{position:relative;z-index:125}
+.pap-action-menu,.pap-action-bubble{position:fixed;z-index:140}
+.pap-action-menu{display:flex;gap:6px;padding:6px;border:1px solid color-mix(in srgb,var(--primary),transparent 72%);border-radius:15px;background:#fff;box-shadow:0 12px 30px rgba(41,33,58,.2)}
+.pap-action-menu button{padding:8px 10px;border:0;border-radius:10px;background:var(--soft);color:var(--ink);font-weight:700;cursor:pointer}
+.pap-action-menu button:hover{background:var(--primary);color:#fff}
+.pap-action-bubble{max-width:180px;padding:8px 12px;border-radius:15px;background:#fff;box-shadow:0 10px 25px rgba(41,33,58,.18);font-weight:800;animation:pap-bubble-in .22s ease}
+.pap-action-bubble--cat{border-left:3px solid #b55bd9}.pap-action-bubble--dog{border-left:3px solid #ed8b32}
+.pap-mascot[data-state="excited"] .pap-mascot__face{animation:pap-excited .3s ease-in-out infinite alternate}
+.pap-mascot[data-state="relaxed"] .pap-mascot__face{animation:pap-relaxed .8s ease-in-out infinite alternate}
+.pap-mood-launcher{position:fixed;right:18px;bottom:78px;z-index:125;padding:8px 12px;border:1px solid color-mix(in srgb,var(--primary),transparent 75%);border-radius:999px;background:rgba(255,255,255,.92);color:var(--primary);font-size:.75rem;font-weight:800;box-shadow:0 7px 20px rgba(41,33,58,.12);cursor:pointer}
+.pap-chaos-trigger{position:fixed;left:10px;bottom:10px;z-index:124;width:24px;height:24px;padding:0;border:0;border-radius:50%;background:rgba(41,33,58,.08);color:rgba(41,33,58,.35);font-size:.65rem;cursor:pointer;opacity:.38;transition:opacity .2s,transform .2s}
+.pap-chaos-trigger:hover,.pap-chaos-trigger:focus-visible{opacity:.8;transform:rotate(20deg)}
+.pap-mood-overlay{position:fixed;inset:0;z-index:180;display:grid;place-items:center;padding:16px;background:rgba(28,20,35,.46);backdrop-filter:blur(6px)}
+.pap-mood-card{position:relative;width:min(540px,100%);padding:28px;border-radius:25px;background:#fff;box-shadow:0 25px 70px rgba(30,20,39,.3)}
+.pap-mood-card>span:first-child{color:var(--primary);font-size:.78rem;font-weight:800}.pap-mood-card h2{margin:10px 30px 18px 0;font-size:clamp(1.5rem,4vw,2.2rem)}
+.pap-mood-close{position:absolute;right:14px;top:12px;border:0;background:transparent;font-size:1.5rem;cursor:pointer}
+.pap-mood-options{display:grid;gap:9px}
+.pap-mood-options button,.pap-mood-products a{padding:12px 14px;border:1px solid #e3dce8;border-radius:13px;background:var(--soft);color:var(--ink);text-align:left;text-decoration:none;cursor:pointer}
+.pap-mood-options button:hover,.pap-mood-products a:hover{border-color:var(--primary);transform:translateY(-1px)}
+.pap-mood-result p{color:var(--muted)}.pap-mood-badge{display:inline-flex!important;padding:5px 10px;border-radius:999px;background:var(--soft);color:var(--primary)}
+.pap-mood-meter{height:10px;margin:18px 0;border-radius:999px;background:#ebe5ef;overflow:hidden}.pap-mood-meter i{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,var(--secondary),var(--primary))}
+.pap-mood-products{display:grid;gap:8px;margin-top:14px}
+.pap-chaos{position:fixed;inset:0;z-index:210;overflow:hidden;pointer-events:none}.pap-chaos span{position:absolute;left:var(--chaos-x);top:var(--chaos-y);font-size:clamp(2.4rem,6vw,5rem);animation:pap-chaos-run 1.1s var(--chaos-delay) ease-in-out infinite alternate;filter:drop-shadow(0 7px 5px rgba(0,0,0,.2))}.pap-chaos span:nth-child(2n){animation-direction:alternate-reverse}.pap-chaos--reduced span{animation:pap-chaos-fade 3s ease both}
+@keyframes pap-bubble-in{from{opacity:0;transform:translateY(7px) scale(.94)}}
+@keyframes pap-excited{to{translate:0 -12px;rotate:8deg;scale:1.08}}
+@keyframes pap-relaxed{to{translate:0 3px;scale:.96}}
+@keyframes pap-chaos-run{to{translate:12vw -18vh;rotate:var(--chaos-turn);scale:1.15}}
+@keyframes pap-chaos-fade{0%,100%{opacity:0}20%,75%{opacity:.7}}
+@media(max-width:700px){.pap-mood-launcher{right:66px;bottom:13px;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.pap-action-menu{transform:scale(.92);transform-origin:left bottom}.pap-mood-card{padding:22px}.pap-chaos-trigger{width:22px;height:22px}}
+@media(prefers-reduced-motion:reduce){.pap-action-bubble,.pap-mascot[data-state="excited"] .pap-mascot__face,.pap-mascot[data-state="relaxed"] .pap-mascot__face,.pap-chaos span{animation:none!important}.pap-action-menu button,.pap-mood-options button,.pap-mood-products a,.pap-chaos-trigger{transition:none!important}}

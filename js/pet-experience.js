@@ -1,4 +1,5 @@
 import { createMascotVisual, renderMascot, setMascotVisible } from "./pet-mascot-visuals.js";
+import { createPetPersonality } from "./pet-personality.js";
 
 const CAT_REPLIES = ["เหมียว", "เหมียววว~", "เมี๊ยว?", "เหมียว!", "เมี๊ยววว", "...เหมียว"];
 const DOG_REPLIES = ["โฮ่ง!", "โฮ่งโฮ่ง!", "บ๊อก!", "บ๊อกบ๊อก", "โฮ่งงง", "แฮ่ก ๆ... โฮ่ง!"];
@@ -25,6 +26,7 @@ class MascotController {
     this.perchSteps = 0;
     this.peers = [];
     this.chatSnapshot = null;
+    this.lockOwner = null;
     this.destroyed = false;
     stage.append(this.visual.root);
     this.draw();
@@ -180,28 +182,47 @@ class MascotController {
     this.draw();
   }
 
-  pauseForResponse() {
-    if (this.destroyed) return;
+  isLocked() { return Boolean(this.lockOwner); }
+
+  beginInteraction(owner) {
+    if (this.destroyed || this.lockOwner) return false;
+    this.lockOwner = owner;
     this.chatSnapshot = { state:this.model.state, targetCard:this.targetCard };
     this.paused = true;
     clearTimeout(this.timer);
     this.model.duration = 0;
     this.draw();
+    return true;
+  }
+
+  showInteractionState(owner, state) {
+    if (this.destroyed || this.lockOwner !== owner) return false;
+    this.model.state = state;
+    this.model.duration = 180;
+    this.draw();
+    return true;
+  }
+
+  endInteraction(owner) {
+    if (this.destroyed || this.lockOwner !== owner) return false;
+    const snapshot = this.chatSnapshot;
+    this.chatSnapshot = null;
+    this.lockOwner = null;
+    this.paused = false;
+    if (snapshot?.targetCard && snapshot.targetCard.isConnected) { this.targetCard = snapshot.targetCard; this.perch(); }
+    else if (["idle", "sit", "sleep", "curious"].includes(snapshot?.state)) { this.model.state = snapshot.state; this.model.duration = 180; this.draw(); this.schedule(wait(900, 1400)); }
+    else this.walk();
+    return true;
+  }
+
+  pauseForResponse() {
+    return this.beginInteraction("chat");
   }
 
   reactAndResume() {
-    if (this.destroyed) return;
-    this.model.state = Math.random() < .7 ? "happy" : "curious";
-    this.model.duration = 180;
-    this.draw();
+    if (!this.showInteractionState("chat", Math.random() < .7 ? "happy" : "curious")) return;
     this.timer = window.setTimeout(() => {
-      if (this.destroyed) return;
-      const snapshot = this.chatSnapshot;
-      this.chatSnapshot = null;
-      this.paused = false;
-      if (snapshot?.targetCard && snapshot.targetCard.isConnected) { this.targetCard = snapshot.targetCard; this.perch(); }
-      else if (["idle", "sit", "sleep", "curious"].includes(snapshot?.state)) { this.model.state = snapshot.state; this.model.duration = 180; this.draw(); this.schedule(wait(900, 1400)); }
-      else this.walk();
+      this.endInteraction("chat");
     }, 1300);
   }
 
@@ -240,13 +261,15 @@ function createChat(mode, controllers) {
     event.preventDefault();
     const text = input.value.trim();
     if (!text || pending) return;
+    const available = controllers.filter((controller) => !controller.isLocked());
+    if (!available.length) return;
+    const responder = mode === "both" ? randomItem(available) : available.find((controller) => controller.kind === mode);
+    if (!responder?.pauseForResponse()) return;
     addMessage("user", text);
     input.value = "";
     pending = true;
     input.disabled = true;
-    const kind = chatResponderForMode(mode);
-    const responder = controllers.find((controller) => controller.kind === kind);
-    responder?.pauseForResponse();
+    const kind = responder.kind;
     const typing = addMessage("pet", "", kind);
     typing.classList.add("pap-chat-message--typing");
     typing.innerHTML = `<span class="pap-chat-avatar" aria-hidden="true">${kind === "cat" ? "🐱" : "🐶"}</span><span class="pap-typing-dots" aria-label="กำลังพิมพ์"><i></i><i></i><i></i></span>`;
@@ -269,7 +292,7 @@ function createChat(mode, controllers) {
   return { shell, destroy() { destroyed = true; clearTimeout(responseTimer); launcher.removeEventListener("click", onLaunch); close.removeEventListener("click", onClose); form.removeEventListener("submit", onSubmit); shell.remove(); } };
 }
 
-export function initPetExperience({ mode }) {
+export function initPetExperience({ mode, products = [], sound = () => {} }) {
   if (document.querySelector(".pap-mascot-stage") || location.pathname.endsWith("/admin.html")) return null;
   if (!["cat", "dog", "both"].includes(mode)) return null;
   const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -283,6 +306,7 @@ export function initPetExperience({ mode }) {
   controllers.forEach((controller) => controller.setPeers(controllers));
   controllers.forEach((controller) => controller.start());
   const chat = createChat(mode, controllers);
+  const personality = createPetPersonality({ mode, controllers, products, sound, mobile, reducedMotion });
   let pointerFrame = 0;
   const onPointerMove = (event) => {
     if (pointerFrame || mobile || reducedMotion) return;
@@ -299,6 +323,7 @@ export function initPetExperience({ mode }) {
     const hidden = document.body.classList.contains("horror");
     stage.hidden = hidden;
     chat.shell.hidden = hidden;
+    personality.setHidden(hidden);
   };
   const horrorObserver = new MutationObserver(syncHorrorVisibility);
   syncHorrorVisibility();
@@ -313,6 +338,7 @@ export function initPetExperience({ mode }) {
     if (pointerFrame) cancelAnimationFrame(pointerFrame);
     if (scrollFrame) cancelAnimationFrame(scrollFrame);
     horrorObserver.disconnect();
+    personality.destroy();
     chat.destroy();
     controllers.forEach((controller) => controller.destroy());
     stage.remove();

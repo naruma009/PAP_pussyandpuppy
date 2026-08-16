@@ -37,7 +37,7 @@
     document.body.append(node); setTimeout(() => node.remove(), 1800);
   }
   function applyTheme() {
-    ["css/flow.css","css/interactions.css","css/pet-experience.css"].forEach((href) => { if (!document.querySelector(`link[href="${href}"]`)) { const styles = document.createElement("link"); styles.rel = "stylesheet"; styles.href = href; document.head.append(styles); } });
+    ["css/flow.css","css/interactions.css","css/pet-experience.css","css/pet-personality.css"].forEach((href) => { if (!document.querySelector(`link[href="${href}"]`)) { const styles = document.createElement("link"); styles.rel = "stylesheet"; styles.href = href; document.head.append(styles); } });
     document.documentElement.dataset.pet = store.getMode();
     document.querySelectorAll("[data-theme-toggle]").forEach((button) => button.remove());
     document.querySelectorAll('a[href="admin.html"]').forEach((link) => { link.hidden = true; });
@@ -213,7 +213,7 @@
   document.addEventListener("DOMContentLoaded", async () => {
     document.querySelectorAll('a[href="admin.html"]').forEach((link) => { link.hidden = true; });
     if (!location.pathname.endsWith("/admin.html") && !store.hasMode()) { location.replace("index.html"); return; }
-    try { await store.load(); applyTheme(); await renderAdminNavigation(); bindShared(); renderHome(); renderProducts(); renderDetail(); renderCart(); bindLogin(); document.documentElement.dataset.uiReady = ""; import("/js/pet-experience.js").then(({ initPetExperience }) => initPetExperience({ mode:store.getMode() })).catch(() => {}); }
+    try { await store.load(); applyTheme(); await renderAdminNavigation(); bindShared(); renderHome(); renderProducts(); renderDetail(); renderCart(); bindLogin(); document.documentElement.dataset.uiReady = ""; import("/js/pet-experience.js").then(({ initPetExperience }) => initPetExperience({ mode:store.getMode(), products:store.getProducts(), sound })).catch(() => {}); }
     catch (error) { document.body.insertAdjacentHTML("beforeend", `<div class="toast">Backend unavailable: ${escapeHtml(error.message)}</div>`); }
   });
 })();
