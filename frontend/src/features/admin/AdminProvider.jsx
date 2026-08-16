@@ -7,6 +7,7 @@ export default function AdminProvider({ children, bootstrap = true }) {
   const [authenticated, setAuthenticated] = useState(false);
   const [status, setStatus] = useState(bootstrap ? "loading" : "ready");
   const [error, setError] = useState(null);
+  const [authAction, setAuthAction] = useState(null);
   const [retry, setRetry] = useState(0);
   const version = useRef(0);
   const bootstrapController = useRef(null);
@@ -37,24 +38,24 @@ export default function AdminProvider({ children, bootstrap = true }) {
 
   useEffect(() => () => { mutationController.current?.abort(); }, []);
 
-  const beginMutation = useCallback(() => {
+  const beginMutation = useCallback((action) => {
     const requestVersion = invalidate();
     mutationController.current?.abort();
     const controller = new AbortController();
     mutationController.current = controller;
-    setError(null);
+    setError(null); setAuthAction(action);
     return { controller, requestVersion };
   }, [invalidate]);
 
   const value = useMemo(() => ({
-    authenticated, status, error,
+    authenticated, status, error, loggingOut: authAction === "logout",
     retry() { setRetry((current) => current + 1); },
     expireAdminSession() {
       invalidate(); mutationController.current?.abort(); mutationController.current = null;
-      setAuthenticated(false); setStatus("ready"); setError(null);
+      setAuthenticated(false); setStatus("ready"); setError(null); setAuthAction(null);
     },
     async login(code) {
-      const { controller, requestVersion } = beginMutation();
+      const { controller, requestVersion } = beginMutation("login");
       try {
         const result = await loginAdmin(code, controller.signal);
         if (requestVersion !== version.current) return false;
@@ -64,10 +65,10 @@ export default function AdminProvider({ children, bootstrap = true }) {
         if (nextError.name === "AbortError" || requestVersion !== version.current) return false;
         setAuthenticated(false); setStatus("ready");
         throw nextError;
-      } finally { if (mutationController.current === controller) mutationController.current = null; }
+      } finally { if (mutationController.current === controller) { mutationController.current = null; setAuthAction(null); } }
     },
     async logout() {
-      const { controller, requestVersion } = beginMutation();
+      const { controller, requestVersion } = beginMutation("logout");
       try {
         await logoutAdmin(controller.signal);
         if (requestVersion !== version.current) return false;
@@ -77,9 +78,9 @@ export default function AdminProvider({ children, bootstrap = true }) {
         if (nextError.name === "AbortError" || requestVersion !== version.current) return false;
         setStatus("ready");
         throw nextError;
-      } finally { if (mutationController.current === controller) mutationController.current = null; }
+      } finally { if (mutationController.current === controller) { mutationController.current = null; setAuthAction(null); } }
     },
-  }), [authenticated, status, error, beginMutation, invalidate]);
+  }), [authenticated, status, error, authAction, beginMutation, invalidate]);
 
   return <AdminContext.Provider value={value}>{children}</AdminContext.Provider>;
 }

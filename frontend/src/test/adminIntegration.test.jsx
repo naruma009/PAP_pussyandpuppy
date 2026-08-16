@@ -19,6 +19,7 @@ function fetchForAdmin(authenticated = false) {
     if (endpoint.endsWith("/products")) return Response.json([{ id: 1, name: "Bed", description: "Soft", price: 10, stock: 3, category: "Beds", petType: "both", ageGroup: "all", image: null, emoji: "🐾", featured: false }]);
     if (endpoint.endsWith("/customer/session")) return Response.json({ customer: null });
     if (endpoint.endsWith("/admin/session")) return Response.json({ authenticated: active });
+    if (endpoint.endsWith("/admin/orders")) return Response.json([]);
     if (endpoint.endsWith("/admin/login")) { active = true; return Response.json({ authenticated: true }); }
     if (endpoint.endsWith("/admin/logout")) { active = false; return new Response(null, { status: 204 }); }
     throw new Error(`Unexpected API call: ${endpoint} ${options.method || "GET"}`);
@@ -102,5 +103,6 @@ it("logs in to the translated dark admin shell and logs out without clearing bro
   await waitFor(() => expect(router.state.location.pathname).toBe("/home"));
   expect(localStorage.getItem("pap-cart")).toBe('[{"id":1,"qty":1}]');
   expect(localStorage.getItem("pap-favorites-v1")).toBe("[1]");
-  expect(fetchMock.mock.calls.some(([url]) => /admin\/migrate|admin\/orders|api\/products\/(?:\d+)/.test(String(url)))).toBe(false);
+  expect(fetchMock.mock.calls.some(([url]) => String(url).endsWith("/admin/orders"))).toBe(true);
+  expect(fetchMock.mock.calls.some(([url]) => /admin\/migrate|api\/products\/(?:\d+)/.test(String(url)))).toBe(false);
 });

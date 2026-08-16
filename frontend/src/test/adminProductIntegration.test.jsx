@@ -24,6 +24,7 @@ function apiMock({ mutation, refresh } = {}) {
     const endpoint = String(url);
     if (endpoint.endsWith("/customer/session")) return Response.json({ customer: null });
     if (endpoint.endsWith("/admin/session")) return Response.json({ authenticated: true });
+    if (endpoint.endsWith("/admin/orders")) return Response.json([]);
     if (endpoint.endsWith("/products") && (!options.method || options.method === "GET")) {
       productGets += 1;
       if (productGets > 1 && refresh) return refresh(products);
@@ -123,6 +124,7 @@ it("expires only admin state on product 401 and preserves customer commerce stor
     if (endpoint.endsWith("/products") && !options.method) return Response.json([bed]);
     if (endpoint.endsWith("/customer/session")) return Response.json({ customer });
     if (endpoint.endsWith("/admin/session")) return Response.json({ authenticated: true });
+    if (endpoint.endsWith("/admin/orders")) return Response.json([]);
     if (endpoint.endsWith("/products") && options.method === "POST") return Response.json({ error: "Admin authentication required" }, { status: 401 });
     throw new Error(`Unexpected API call: ${endpoint}`);
   });
@@ -180,6 +182,7 @@ it("keeps the newest local mutation snapshot while older catalog reconciliation 
     const endpoint = String(url);
     if (endpoint.endsWith("/customer/session")) return Response.json({ customer: null });
     if (endpoint.endsWith("/admin/session")) return Response.json({ authenticated: true });
+    if (endpoint.endsWith("/admin/orders")) return Response.json([]);
     if (endpoint.endsWith("/products") && !options.method) {
       productGets += 1;
       if (productGets === 1) return Response.json([bed]);
@@ -211,6 +214,7 @@ it("aborts and ignores a stale mutation response after unmount without catalog r
     const endpoint = String(url);
     if (endpoint.endsWith("/customer/session")) return Response.json({ customer: null });
     if (endpoint.endsWith("/admin/session")) return Response.json({ authenticated: true });
+    if (endpoint.endsWith("/admin/orders")) return Response.json([]);
     if (endpoint.endsWith("/products") && !options.method) { productGets += 1; return Response.json([bed]); }
     if (endpoint.endsWith("/products") && options.method === "POST") {
       mutationSignal = options.signal;
@@ -245,6 +249,7 @@ it("restores an existing custom emoji after an invalid replacement image", async
     const endpoint = String(url);
     if (endpoint.endsWith("/customer/session")) return Response.json({ customer: null });
     if (endpoint.endsWith("/admin/session")) return Response.json({ authenticated: true });
+    if (endpoint.endsWith("/admin/orders")) return Response.json([]);
     if (endpoint.endsWith("/products") && !options.method) return Response.json([emojiProduct]);
     throw new Error(`Unexpected API call: ${endpoint}`);
   }));

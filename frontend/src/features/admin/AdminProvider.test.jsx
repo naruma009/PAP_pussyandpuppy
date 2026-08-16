@@ -8,7 +8,7 @@ vi.mock("../../services/api", () => ({ getAdminSession: vi.fn(), loginAdmin: vi.
 
 function Probe() {
   const admin = useAdmin();
-  return <><span data-testid="state">{admin.status}:{String(admin.authenticated)}</span><button onClick={() => admin.login("code")}>login</button><button onClick={() => admin.logout()}>logout</button><button onClick={admin.retry}>retry</button><button onClick={admin.expireAdminSession}>expire</button></>;
+  return <><span data-testid="state">{admin.status}:{String(admin.authenticated)}:{String(admin.loggingOut)}</span><button onClick={() => admin.login("code")}>login</button><button onClick={() => admin.logout()}>logout</button><button onClick={admin.retry}>retry</button><button onClick={admin.expireAdminSession}>expire</button></>;
 }
 
 beforeEach(() => {
@@ -20,9 +20,9 @@ beforeEach(() => {
 it("bootstraps authenticated, anonymous, error and retry states", async () => {
   getAdminSession.mockRejectedValueOnce(new Error("offline")).mockResolvedValueOnce({ authenticated: true });
   render(<AdminProvider><Probe /></AdminProvider>);
-  expect(await screen.findByText("error:false")).toBeInTheDocument();
+  expect(await screen.findByText("error:false:false")).toBeInTheDocument();
   await userEvent.click(screen.getByRole("button", { name: "retry" }));
-  expect(await screen.findByText("ready:true")).toBeInTheDocument();
+  expect(await screen.findByText("ready:true:false")).toBeInTheDocument();
 });
 
 it("aborts bootstrap on unmount", () => {
@@ -44,7 +44,7 @@ it("prevents stale bootstrap and aborts superseded login/logout mutations", asyn
   await userEvent.click(screen.getByRole("button", { name: "login" }));
   expect(logoutSignal.aborted).toBe(true);
   bootstrapResolve({ authenticated: true });
-  await waitFor(() => expect(screen.getByTestId("state")).not.toHaveTextContent("ready:true"));
+  await waitFor(() => expect(screen.getByTestId("state")).not.toHaveTextContent("ready:true:false"));
 });
 
 it("does not let a stale bootstrap overwrite a successful login", async () => {
@@ -52,28 +52,40 @@ it("does not let a stale bootstrap overwrite a successful login", async () => {
   getAdminSession.mockImplementation(() => new Promise((resolve) => { resolveSession = resolve; }));
   render(<AdminProvider><Probe /></AdminProvider>);
   await userEvent.click(screen.getByRole("button", { name: "login" }));
-  expect(await screen.findByText("ready:true")).toBeInTheDocument();
+  expect(await screen.findByText("ready:true:false")).toBeInTheDocument();
   resolveSession({ authenticated: false });
-  await waitFor(() => expect(screen.getByTestId("state")).toHaveTextContent("ready:true"));
+  await waitFor(() => expect(screen.getByTestId("state")).toHaveTextContent("ready:true:false"));
 });
 
 it("does not let a stale retry bootstrap overwrite a successful logout", async () => {
   let resolveRetry;
   getAdminSession.mockResolvedValueOnce({ authenticated: true }).mockImplementationOnce(() => new Promise((resolve) => { resolveRetry = resolve; }));
   render(<AdminProvider><Probe /></AdminProvider>);
-  expect(await screen.findByText("ready:true")).toBeInTheDocument();
+  expect(await screen.findByText("ready:true:false")).toBeInTheDocument();
   await userEvent.click(screen.getByRole("button", { name: "retry" }));
   await userEvent.click(screen.getByRole("button", { name: "logout" }));
-  expect(await screen.findByText("ready:false")).toBeInTheDocument();
+  expect(await screen.findByText("ready:false:false")).toBeInTheDocument();
   resolveRetry({ authenticated: true });
-  await waitFor(() => expect(screen.getByTestId("state")).toHaveTextContent("ready:false"));
+  await waitFor(() => expect(screen.getByTestId("state")).toHaveTextContent("ready:false:false"));
 });
 
 it("expires only local admin state without calling logout", async () => {
   getAdminSession.mockResolvedValue({ authenticated: true });
   render(<AdminProvider><Probe /></AdminProvider>);
-  expect(await screen.findByText("ready:true")).toBeInTheDocument();
+  expect(await screen.findByText("ready:true:false")).toBeInTheDocument();
   await userEvent.click(screen.getByRole("button", { name: "expire" }));
-  expect(screen.getByTestId("state")).toHaveTextContent("ready:false");
+  expect(screen.getByTestId("state")).toHaveTextContent("ready:false:false");
   expect(logoutAdmin).not.toHaveBeenCalled();
+});
+
+it("exposes loggingOut only for the active logout mutation", async () => {
+  let resolveLogout;
+  getAdminSession.mockResolvedValue({ authenticated: true });
+  logoutAdmin.mockImplementation(() => new Promise((resolve) => { resolveLogout = resolve; }));
+  render(<AdminProvider><Probe /></AdminProvider>);
+  expect(await screen.findByText("ready:true:false")).toBeInTheDocument();
+  await userEvent.click(screen.getByRole("button", { name: "logout" }));
+  expect(screen.getByTestId("state")).toHaveTextContent("ready:true:true");
+  resolveLogout(null);
+  expect(await screen.findByText("ready:false:false")).toBeInTheDocument();
 });

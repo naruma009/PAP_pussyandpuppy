@@ -53,6 +53,10 @@ export async function getAdminSession(signal) {
   return apiRequest("/admin/session", { signal, expectedStatus: 200 });
 }
 
+export async function getAdminOrders(signal) {
+  return apiRequest("/admin/orders", { signal, expectedStatus: 200 });
+}
+
 export async function loginAdmin(code, signal) {
   return apiRequest("/admin/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code }), signal, expectedStatus: 200 });
 }

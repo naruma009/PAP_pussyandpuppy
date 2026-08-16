@@ -1,5 +1,5 @@
 import { afterEach, expect, it, vi } from "vitest";
-import { ApiError, apiRequest, createOrder, createProduct, deleteProduct, getCustomerOrders, loginAdmin, logoutAdmin, updateProduct } from "./api";
+import { ApiError, apiRequest, createOrder, createProduct, deleteProduct, getAdminOrders, getCustomerOrders, loginAdmin, logoutAdmin, updateProduct } from "./api";
 
 afterEach(() => vi.restoreAllMocks());
 
@@ -55,6 +55,20 @@ it("requires exact admin login 200 and logout 204 statuses", async () => {
   fetchMock.mockResolvedValueOnce(new Response(null, { status: 204 }));
   await expect(logoutAdmin()).resolves.toBeNull();
   expect(fetchMock.mock.calls.every(([, options]) => options.credentials === "same-origin")).toBe(true);
+});
+
+it("requires exact admin-orders 200 with same-origin credentials and caller abort signal", async () => {
+  const controller = new AbortController();
+  const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(Response.json([{ id: "PAP-1" }], { status: 200 }));
+  await expect(getAdminOrders(controller.signal)).resolves.toEqual([{ id: "PAP-1" }]);
+  expect(fetchMock).toHaveBeenCalledOnce();
+  expect(fetchMock).toHaveBeenCalledWith("/api/admin/orders", expect.objectContaining({ credentials: "same-origin", signal: controller.signal }));
+});
+
+it.each([201, 202, 204, 205])("rejects wrong admin-orders success status %s without retry", async (status) => {
+  const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(null, { status }));
+  await expect(getAdminOrders()).rejects.toMatchObject({ status, message: `Request failed (${status})` });
+  expect(fetchMock).toHaveBeenCalledOnce();
 });
 
 it("uses exact product mutation statuses and leaves multipart content type to the browser", async () => {
