@@ -26,3 +26,15 @@ export async function getHealth(signal) {
 export async function getProducts(signal) {
   return apiRequest("/products", { signal });
 }
+
+export async function getCustomerSession(signal) {
+  return apiRequest("/customer/session", { signal });
+}
+
+export async function loginCustomer(customer, signal) {
+  return apiRequest("/customer/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(customer), signal });
+}
+
+export async function logoutCustomer(signal) {
+  return apiRequest("/customer/logout", { method: "POST", signal });
+}

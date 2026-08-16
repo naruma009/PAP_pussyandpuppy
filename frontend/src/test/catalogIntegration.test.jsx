@@ -12,7 +12,7 @@ const products = [
 ];
 
 function renderRoute(path) {
-  vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify(products), { status: 200, headers: { "Content-Type": "application/json" } })));
+  vi.stubGlobal("fetch", vi.fn().mockImplementation((url) => Promise.resolve(new Response(JSON.stringify(String(url).endsWith("/customer/session") ? { customer: null } : products), { status: 200, headers: { "Content-Type": "application/json" } }))));
   const router = createMemoryRouter(routes, { initialEntries: [path] });
   render(<AppProviders><RouterProvider router={router} /></AppProviders>);
   return router;
@@ -20,7 +20,9 @@ function renderRoute(path) {
 
 function renderDeferredRoute(path) {
   let resolveRequest;
-  vi.stubGlobal("fetch", vi.fn().mockImplementation(() => new Promise((resolve) => { resolveRequest = () => resolve(new Response(JSON.stringify(products), { status: 200, headers: { "Content-Type": "application/json" } })); })));
+  vi.stubGlobal("fetch", vi.fn().mockImplementation((url) => String(url).endsWith("/customer/session")
+    ? Promise.resolve(new Response(JSON.stringify({ customer: null }), { status: 200, headers: { "Content-Type": "application/json" } }))
+    : new Promise((resolve) => { resolveRequest = () => resolve(new Response(JSON.stringify(products), { status: 200, headers: { "Content-Type": "application/json" } })); })));
   const router = createMemoryRouter(routes, { initialEntries: [path] });
   render(<AppProviders><RouterProvider router={router} /></AppProviders>);
   return { router, resolveRequest: () => act(() => resolveRequest()) };
@@ -78,7 +80,7 @@ it("hydrates product detail by legacy ID alias", async () => {
   expect(await screen.findByRole("heading", { name: "Shared Toy" })).toBeInTheDocument();
   expect(router.state.location.pathname).toBe("/products/3");
   expect(document.title).toBe("Shared Toy — PAP");
-  expect(localStorage.getItem("pap-cart")).toBeNull();
+  expect(localStorage.getItem("pap-cart")).toBe("[]");
   await router.navigate("/products/999");
   await waitFor(() => expect(document.title).toBe("ไม่พบสินค้านี้ — PAP"));
   await router.navigate("/home");

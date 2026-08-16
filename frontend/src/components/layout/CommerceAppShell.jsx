@@ -1,6 +1,7 @@
 import { Outlet } from "react-router-dom";
 import SiteFooter from "./SiteFooter";
 import SiteHeader from "./SiteHeader";
+import CommerceNotice from "../commerce/CommerceNotice";
 
 export default function CommerceAppShell() {
   return (
@@ -9,6 +10,7 @@ export default function CommerceAppShell() {
       <SiteHeader />
       <main id="main"><Outlet /></main>
       <SiteFooter />
+      <CommerceNotice />
     </div>
   );
 }

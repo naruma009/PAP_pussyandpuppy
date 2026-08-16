@@ -4,7 +4,7 @@ import PreferenceProvider, { usePreferences } from "../preferences/PreferencePro
 
 function Probe() {
   const { t } = usePreferences();
-  return <span>{t("bothOnly")}|{t("forDog")}|{t("forBoth")}</span>;
+  return <span>{t("bothOnly")}|{t("forDog")}|{t("forBoth")}|{t("cartTitle")}|{t("logout")}</span>;
 }
 
 it.each(["cat", "dog", "both"].flatMap((mode) => ["light", "dark"].flatMap((theme) => ["th", "en"].map((language) => [mode, theme, language]))))(
@@ -17,6 +17,6 @@ it.each(["cat", "dog", "both"].flatMap((mode) => ["light", "dark"].flatMap((them
     expect(document.documentElement.dataset.pet).toBe(mode);
     expect(document.documentElement.dataset.theme).toBe(theme);
     expect(document.documentElement.lang).toBe(language);
-    expect(screen.getByText(language === "en" ? "Cat & Dog|For Dog|For Cat & Dog" : "ใช้ได้ทั้งคู่|สำหรับหมา|สำหรับแมวและหมา")).toBeInTheDocument();
+    expect(screen.getByText(language === "en" ? "Cat & Dog|For Dog|For Cat & Dog|Cart of happiness|Logout" : "ใช้ได้ทั้งคู่|สำหรับหมา|สำหรับแมวและหมา|ตะกร้าความสุข|ออกจากระบบ")).toBeInTheDocument();
   },
 );

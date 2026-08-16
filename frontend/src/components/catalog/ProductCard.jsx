@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { money } from "../../features/catalog/catalog";
 import { useCatalog } from "../../features/catalog/CatalogProvider";
 import { usePreferences } from "../../features/preferences/PreferenceProvider";
+import AddToCartButton from "../commerce/AddToCartButton";
 
 export function petLabel(type, t) {
   return type === "cat" ? t("forCat") : type === "dog" ? t("forDog") : t("forBoth");
@@ -23,7 +23,7 @@ export function FavoriteButton({ product, detail = false }) {
 }
 
 export default function ProductCard({ product }) {
-  const { language, t } = usePreferences();
+  const { t } = usePreferences();
   const petIcon = product.petType === "cat" ? "🐱" : product.petType === "dog" ? "🐶" : "🐾";
   return <article className="product-card" data-product-id={product.id}>
     <Link className="product-visual" to={`/products/${product.id}`} aria-label={`${t("viewProduct")} ${product.name}`}><ProductVisual product={product} /></Link>
@@ -32,9 +32,7 @@ export default function ProductCard({ product }) {
       <small className="product-kicker"><span>{t(`category.${product.category}`)}</span><span className={`pet-badge pet-badge--${product.petType}`}><span aria-hidden="true">{petIcon}</span>{petLabel(product.petType, t)}</span></small>
       <h3><Link to={`/products/${product.id}`}>{product.name}</Link></h3><p>{product.description}</p>
       <div className={`stock${Number(product.stock) <= 0 ? " out" : ""}`}>{Number(product.stock) <= 0 ? t("outStock") : t("inStock", { count: product.stock })}</div>
-      <div className="catalog-cart-copy-slot" aria-hidden="true" />
-      <div className="product-bottom"><strong>{money(product.price, language)}</strong><span className="catalog-cart-action-slot" aria-hidden="true" /></div>
-      <div className="card-feedback" aria-hidden="true" />
+      <AddToCartButton product={product} />
     </div>
   </article>;
 }
