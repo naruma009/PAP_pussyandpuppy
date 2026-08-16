@@ -171,7 +171,7 @@
     let saved = {}; try { saved = JSON.parse(sessionStorage.getItem(storageKey)) || {}; } catch {}
     const state = {
       category:categories.includes(saved.category) ? saved.category : "all", petType:petTypes.includes(saved.petType) ? saved.petType : "all",
-      age:["all","young","adult","senior"].includes(saved.age) ? saved.age : "all", stock:["all","in","out"].includes(saved.stock) ? saved.stock : "all",
+      age:["all","young","adult","senior"].includes(saved.age) ? saved.age : "all", hideOutOfStock:typeof saved.hideOutOfStock === "boolean" ? saved.hideOutOfStock : saved.stock === "in",
       sort:["default","price-asc","price-desc","name","newest"].includes(saved.sort) ? saved.sort : "default", favoritesOnly:Boolean(saved.favoritesOnly),
       search:String(saved.search || ""), min:Math.max(availableMin, Number.isFinite(Number(saved.min)) ? Number(saved.min) : availableMin), max:Math.min(availableMax, Number.isFinite(Number(saved.max)) ? Number(saved.max) : availableMax)
     };
@@ -182,22 +182,22 @@
       <label class="age-filter discovery-search">${uiText("search", "Search")}<span><input data-product-search type="search" value="${escapeHtml(state.search)}" placeholder="${uiText("searchPlaceholder", "ค้นหาชื่อ รายละเอียด หรือหมวดหมู่")}"><button type="button" data-clear-search aria-label="${uiText("clearSearch", "ล้างคำค้นหา")}">×</button></span></label>
       <label class="age-filter">${uiText("petType", "Pet Type")}<select data-pet-filter><option value="all">${uiText("allRelevantPets", "All relevant pets")}</option>${petOptions}</select></label>
       <label class="age-filter">${uiText("age", "Age")}<select data-age-filter><option value="all">${window.PAPUI?.language === "en" ? "All Ages" : "ทุกช่วงวัย"}</option><option value="young">${window.PAPUI?.language === "en" ? youngLabel : mode === "cat" ? "ลูกแมว" : mode === "dog" ? "ลูกสุนัข" : "ลูกสุนัข / ลูกแมว"}</option><option value="adult">${uiText("adult", "Adult")}</option><option value="senior">${uiText("senior", "Senior")}</option></select></label>
-      <label class="age-filter">${uiText("stock", "Stock")}<select data-stock-filter><option value="all">${uiText("allStock", "All stock")}</option><option value="in">${uiText("inStockOnly", "In stock")}</option><option value="out">${uiText("outStock", "Out of Stock")}</option></select></label>
+      <label class="stock-toggle"><input data-hide-out-of-stock type="checkbox" ${state.hideOutOfStock ? "checked" : ""}><span aria-hidden="true"></span><strong>${uiText("hideOutOfStock", "ซ่อนสินค้าที่หมด")}</strong></label>
       <label class="age-filter">${uiText("sort", "Sort")}<select data-sort><option value="default">${uiText("recommended", "Recommended")}</option><option value="price-asc">${uiText("priceLowHigh", "Price: Low to High")}</option><option value="price-desc">${uiText("priceHighLow", "Price: High to Low")}</option><option value="name">${uiText("nameAZ", "Name: A to Z")}</option><option value="newest">${uiText("newest", "Newest")}</option></select></label>
       <div class="price-filter"><div><span>${uiText("priceRange", "Price Range")}</span><strong data-price-output></strong></div><div class="dual-range"><div class="range-track"></div><input data-price-min type="range" min="${availableMin}" max="${availableMax}" value="${state.min}"><input data-price-max type="range" min="${availableMin}" max="${availableMax}" value="${state.max}"></div></div>
       <div class="favorite-filter-wrap"><button class="favorite-filter" type="button" data-favorites-only aria-pressed="${state.favoritesOnly}">♥ ${uiText("favoritesOnly", "Favorites only")}</button><small>${uiText("favoritesDeviceOnly", "บันทึกเฉพาะในอุปกรณ์นี้ ไม่ซิงก์กับบัญชี")}</small></div>
       <button class="reset-filters" type="button">${uiText("resetFilters", "ล้างตัวกรอง")}</button>
     </div><p class="discovery-status" aria-live="polite"></p>`;
-    const buttons = filterBar.querySelectorAll("[data-category]"); const ageSelect = filterBar.querySelector("[data-age-filter]"); const petSelect = filterBar.querySelector("[data-pet-filter]"); const stockSelect = filterBar.querySelector("[data-stock-filter]"); const sortSelect = filterBar.querySelector("[data-sort]"); const searchInput = filterBar.querySelector("[data-product-search]"); const clearSearch = filterBar.querySelector("[data-clear-search]"); const favoriteFilter = filterBar.querySelector("[data-favorites-only]"); const minInput = filterBar.querySelector("[data-price-min]"); const maxInput = filterBar.querySelector("[data-price-max]"); const priceOutput = filterBar.querySelector("[data-price-output]"); const status = filterBar.querySelector(".discovery-status");
-    ageSelect.value = state.age; petSelect.value = state.petType; stockSelect.value = state.stock; sortSelect.value = state.sort;
+    const buttons = filterBar.querySelectorAll("[data-category]"); const ageSelect = filterBar.querySelector("[data-age-filter]"); const petSelect = filterBar.querySelector("[data-pet-filter]"); const stockToggle = filterBar.querySelector("[data-hide-out-of-stock]"); const sortSelect = filterBar.querySelector("[data-sort]"); const searchInput = filterBar.querySelector("[data-product-search]"); const clearSearch = filterBar.querySelector("[data-clear-search]"); const favoriteFilter = filterBar.querySelector("[data-favorites-only]"); const minInput = filterBar.querySelector("[data-price-min]"); const maxInput = filterBar.querySelector("[data-price-max]"); const priceOutput = filterBar.querySelector("[data-price-output]"); const status = filterBar.querySelector(".discovery-status");
+    ageSelect.value = state.age; petSelect.value = state.petType; stockToggle.checked = state.hideOutOfStock; sortSelect.value = state.sort;
     const saveAndDraw = () => {
       sessionStorage.setItem(storageKey, JSON.stringify(state));
       buttons.forEach((button) => button.classList.toggle("active", button.dataset.category === state.category));
-      ageSelect.value = state.age; petSelect.value = state.petType; stockSelect.value = state.stock; sortSelect.value = state.sort; minInput.value = state.min; maxInput.value = state.max; priceOutput.textContent = `${money(state.min)} — ${money(state.max)}`; clearSearch.hidden = !state.search; favoriteFilter.setAttribute("aria-pressed", String(state.favoritesOnly));
+      ageSelect.value = state.age; petSelect.value = state.petType; stockToggle.checked = state.hideOutOfStock; sortSelect.value = state.sort; minInput.value = state.min; maxInput.value = state.max; priceOutput.textContent = `${money(state.min)} — ${money(state.max)}`; clearSearch.hidden = !state.search; favoriteFilter.setAttribute("aria-pressed", String(state.favoritesOnly));
       const span = Math.max(1, availableMax - availableMin); const left = ((state.min - availableMin) / span) * 100; const right = 100 - ((state.max - availableMin) / span) * 100; filterBar.style.setProperty("--range-left", `${left}%`); filterBar.style.setProperty("--range-right", `${right}%`);
       const search = state.search.trim().toLowerCase();
       const favorites = new Set(store.getFavorites());
-      let list = eligible.filter((item) => (state.category === "all" || item.category === state.category) && (state.petType === "all" || item.petType === state.petType) && (state.age === "all" || item.ageGroup === state.age || item.ageGroup === "all") && (state.stock === "all" || (state.stock === "in" ? item.stock > 0 : item.stock <= 0)) && (!state.favoritesOnly || favorites.has(item.id)) && (!search || `${item.name} ${item.description} ${item.category}`.toLowerCase().includes(search)) && item.price >= state.min && item.price <= state.max);
+      let list = eligible.filter((item) => (state.category === "all" || item.category === state.category) && (state.petType === "all" || item.petType === state.petType) && (state.age === "all" || item.ageGroup === state.age || item.ageGroup === "all") && (!state.hideOutOfStock || item.stock > 0) && (!state.favoritesOnly || favorites.has(item.id)) && (!search || `${item.name} ${item.description} ${item.category}`.toLowerCase().includes(search)) && item.price >= state.min && item.price <= state.max);
       const sorters = { "price-asc":(a,b)=>a.price-b.price, "price-desc":(a,b)=>b.price-a.price, name:(a,b)=>a.name.localeCompare(b.name, window.PAPUI?.language || "th", { sensitivity:"base" }), newest:(a,b)=>(Date.parse(b.createdAt)||0)-(Date.parse(a.createdAt)||0)||b.id-a.id };
       if (sorters[state.sort]) list = [...list].sort(sorters[state.sort]);
       const emptyMessage = state.favoritesOnly ? uiText("noFavorites", "ยังไม่มีของโปรดในอุปกรณ์นี้") : search ? uiText("noSearchResults", "ดมหาแล้ว แต่ยังไม่เจอสินค้าที่ตรงกัน") : uiText("noCategoryProducts", "ยังไม่มีสินค้าในหมวดนี้");
@@ -208,14 +208,14 @@
     buttons.forEach((button) => button.addEventListener("click", () => { state.category = button.dataset.category; saveAndDraw(); }));
     ageSelect.addEventListener("change", () => { state.age = ageSelect.value; saveAndDraw(); });
     petSelect.addEventListener("change", () => { state.petType = petSelect.value; saveAndDraw(); });
-    stockSelect.addEventListener("change", () => { state.stock = stockSelect.value; saveAndDraw(); });
+    stockToggle.addEventListener("change", () => { state.hideOutOfStock = stockToggle.checked; saveAndDraw(); });
     sortSelect.addEventListener("change", () => { state.sort = sortSelect.value; saveAndDraw(); });
     searchInput.addEventListener("input", () => { state.search = searchInput.value; saveAndDraw(); });
     clearSearch.addEventListener("click", () => { state.search = ""; searchInput.value = ""; searchInput.focus(); saveAndDraw(); });
     favoriteFilter.addEventListener("click", () => { state.favoritesOnly = !state.favoritesOnly; saveAndDraw(); });
     minInput.addEventListener("input", () => { state.min = Math.min(Number(minInput.value), state.max); saveAndDraw(); });
     maxInput.addEventListener("input", () => { state.max = Math.max(Number(maxInput.value), state.min); saveAndDraw(); });
-    filterBar.querySelector(".reset-filters").addEventListener("click", () => { Object.assign(state,{ category:"all",petType:"all",age:"all",stock:"all",sort:"default",favoritesOnly:false,search:"",min:availableMin,max:availableMax }); searchInput.value=""; saveAndDraw(); });
+    filterBar.querySelector(".reset-filters").addEventListener("click", () => { Object.assign(state,{ category:"all",petType:"all",age:"all",hideOutOfStock:false,sort:"default",favoritesOnly:false,search:"",min:availableMin,max:availableMax }); searchInput.value=""; saveAndDraw(); });
     window.addEventListener("pap-favorites-change", saveAndDraw);
     saveAndDraw();
   }
