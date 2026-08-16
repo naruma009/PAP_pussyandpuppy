@@ -17,7 +17,7 @@ DATABASE = BASE_DIR / "instance" / "pap.db"
 UPLOAD_DIR = BASE_DIR / "uploads" / "products"
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "webp"}
 IS_PRODUCTION = os.environ.get("PAP_ENV", "development").lower() == "production"
-PET_THEME_INIT = """<script>(function(){try{var m=localStorage.getItem('pap-mode')||sessionStorage.getItem('pap-mode');if(['cat','dog','both'].includes(m))document.documentElement.dataset.pet=m}catch(e){}})();</script>"""
+PET_THEME_INIT = """<style id="pet-theme-guard">html{visibility:hidden}</style><script>(function(){try{var m=localStorage.getItem('pap-mode')||sessionStorage.getItem('pap-mode');if(['cat','dog','both'].includes(m))document.documentElement.dataset.pet=m}catch(e){}addEventListener('DOMContentLoaded',function(){var g=document.getElementById('pet-theme-guard');if(g)g.remove()},{once:true})})();</script>"""
 
 if IS_PRODUCTION and not os.environ.get("PAP_SECRET_KEY"):
     raise RuntimeError("PAP_SECRET_KEY is required in production")
