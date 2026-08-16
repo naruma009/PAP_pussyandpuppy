@@ -1,0 +1,8 @@
+import { money } from "../../features/catalog/catalog";
+import { usePreferences } from "../../features/preferences/PreferenceProvider";
+import AdminProductImage from "./AdminProductImage";
+
+export default function AdminProductTable({ products, busy, onEdit, onDelete }) {
+  const { language, t } = usePreferences();
+  return <section className="table-wrap admin-list" aria-labelledby="admin-product-list"><h2 id="admin-product-list">{t("productList")}</h2>{products.length ? <table><thead><tr><th scope="col">{t("image")}</th><th scope="col">{t("product")}</th><th scope="col">{t("categoryPet")}</th><th scope="col">{t("price")}</th><th scope="col">{t("stock")}</th><th scope="col">{t("actions")}</th></tr></thead><tbody>{products.map((product) => <tr key={product.id}><td><div className="admin-thumb"><AdminProductImage product={product} /></div></td><td><strong>{product.name}</strong><small>{product.description}</small></td><td>{t(`category.${product.category}`)}<small>{t(`adminPet.${product.petType}`)}</small></td><td>{money(product.price, language)}</td><td><span className={`stock${product.stock === 0 ? " out" : ""}`}>{product.stock === 0 ? t("out") : product.stock}</span></td><td><button className="text-button" type="button" disabled={busy} onClick={() => onEdit(product)} aria-label={t("editProduct", { name: product.name })}>{t("edit")}</button><button className="text-button danger" type="button" disabled={busy} onClick={() => onDelete(product)} aria-label={t("deleteProduct", { name: product.name })}>{t("delete")}</button></td></tr>)}</tbody></table> : <p className="empty-state">{t("noProductsAdmin")}</p>}</section>;
+}

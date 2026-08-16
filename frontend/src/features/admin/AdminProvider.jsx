@@ -49,6 +49,10 @@ export default function AdminProvider({ children, bootstrap = true }) {
   const value = useMemo(() => ({
     authenticated, status, error,
     retry() { setRetry((current) => current + 1); },
+    expireAdminSession() {
+      invalidate(); mutationController.current?.abort(); mutationController.current = null;
+      setAuthenticated(false); setStatus("ready"); setError(null);
+    },
     async login(code) {
       const { controller, requestVersion } = beginMutation();
       try {
@@ -75,7 +79,7 @@ export default function AdminProvider({ children, bootstrap = true }) {
         throw nextError;
       } finally { if (mutationController.current === controller) mutationController.current = null; }
     },
-  }), [authenticated, status, error, beginMutation]);
+  }), [authenticated, status, error, beginMutation, invalidate]);
 
   return <AdminContext.Provider value={value}>{children}</AdminContext.Provider>;
 }

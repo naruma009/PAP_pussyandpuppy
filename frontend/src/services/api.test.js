@@ -1,5 +1,5 @@
 import { afterEach, expect, it, vi } from "vitest";
-import { ApiError, apiRequest, createOrder, getCustomerOrders, loginAdmin, logoutAdmin } from "./api";
+import { ApiError, apiRequest, createOrder, createProduct, deleteProduct, getCustomerOrders, loginAdmin, logoutAdmin, updateProduct } from "./api";
 
 afterEach(() => vi.restoreAllMocks());
 
@@ -55,4 +55,28 @@ it("requires exact admin login 200 and logout 204 statuses", async () => {
   fetchMock.mockResolvedValueOnce(new Response(null, { status: 204 }));
   await expect(logoutAdmin()).resolves.toBeNull();
   expect(fetchMock.mock.calls.every(([, options]) => options.credentials === "same-origin")).toBe(true);
+});
+
+it("uses exact product mutation statuses and leaves multipart content type to the browser", async () => {
+  const data = new FormData(); data.append("name", "Bed");
+  const fetchMock = vi.spyOn(globalThis, "fetch")
+    .mockResolvedValueOnce(Response.json({ id: 1 }, { status: 201 }))
+    .mockResolvedValueOnce(Response.json({ id: 1 }, { status: 200 }))
+    .mockResolvedValueOnce(new Response(null, { status: 204 }));
+  await expect(createProduct(data)).resolves.toEqual({ id: 1 });
+  await expect(updateProduct(1, data)).resolves.toEqual({ id: 1 });
+  await expect(deleteProduct(1)).resolves.toBeNull();
+  expect(fetchMock.mock.calls.map(([url]) => url)).toEqual(["/api/products", "/api/products/1", "/api/products/1"]);
+  fetchMock.mock.calls.forEach(([, options]) => { expect(options.credentials).toBe("same-origin"); expect(options.headers).toBeUndefined(); });
+});
+
+it.each([
+  ["create", 200], ["create", 202], ["create", 204],
+  ["update", 201], ["update", 202], ["update", 204],
+  ["delete", 200], ["delete", 202], ["delete", 205],
+])("rejects wrong product %s status %s", async (operation, status) => {
+  vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(null, { status }));
+  const data = new FormData();
+  const request = operation === "create" ? createProduct(data) : operation === "update" ? updateProduct(1, data) : deleteProduct(1);
+  await expect(request).rejects.toMatchObject({ status });
 });

@@ -60,3 +60,15 @@ export async function loginAdmin(code, signal) {
 export async function logoutAdmin(signal) {
   return apiRequest("/admin/logout", { method: "POST", signal, expectedStatus: 204 });
 }
+
+export async function createProduct(formData, signal) {
+  return apiRequest("/products", { method: "POST", body: formData, signal, expectedStatus: 201 });
+}
+
+export async function updateProduct(id, formData, signal) {
+  return apiRequest(`/products/${encodeURIComponent(id)}`, { method: "PUT", body: formData, signal, expectedStatus: 200 });
+}
+
+export async function deleteProduct(id, signal) {
+  return apiRequest(`/products/${encodeURIComponent(id)}`, { method: "DELETE", signal, expectedStatus: 204 });
+}

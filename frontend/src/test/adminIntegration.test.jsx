@@ -34,7 +34,7 @@ it("redirects anonymous direct admin access and preserves the legacy alias query
   router.dispose();
   router = mount("/admin.html?from=legacy#top", fetchForAdmin(true));
   await waitFor(() => expect(router.state.location).toMatchObject({ pathname: "/admin", search: "?from=legacy", hash: "#top" }));
-  expect(await screen.findByRole("heading", { name: "แดชบอร์ดผู้ดูแล" })).toBeInTheDocument();
+  expect(await screen.findByRole("heading", { name: "จัดการสินค้า" })).toBeInTheDocument();
 });
 
 it("opens the hidden gate on five timely logo clicks, handles errors and Escape focus", async () => {
@@ -96,7 +96,7 @@ it("logs in to the translated dark admin shell and logs out without clearing bro
   await user.type(screen.getByLabelText("Access code"), "secret");
   await user.click(screen.getByRole("button", { name: "Continue" }));
   await waitFor(() => expect(router.state.location.pathname).toBe("/admin"));
-  expect(await screen.findByRole("heading", { name: "Admin Dashboard" })).toBeInTheDocument();
+  expect(await screen.findByRole("heading", { name: "Manage Products" })).toBeInTheDocument();
   expect(document.documentElement).toHaveAttribute("data-theme", "dark");
   await user.click(screen.getByRole("button", { name: "Logout Admin" }));
   await waitFor(() => expect(router.state.location.pathname).toBe("/home"));

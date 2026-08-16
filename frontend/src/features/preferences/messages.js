@@ -61,6 +61,20 @@ Object.assign(messages.en, {
 });
 
 Object.assign(messages.th, {
+  manageProducts: "จัดการสินค้า", manageProductsIntro: "เพิ่ม แก้ไข และดูแลสต็อกสินค้าของ PAP", productInformation: "ข้อมูลสินค้า", productImage: "รูปสินค้า", imageHelp: "PNG, JPEG หรือ WebP ไม่เกิน 1.5 MB", productName: "ชื่อสินค้า", productDescription: "รายละเอียดสินค้า", productPrice: "ราคา (บาท)", stockQuantity: "จำนวนสต็อก", category: "หมวดหมู่", featuredProduct: "สินค้าแนะนำ",
+  livePreview: "ตัวอย่างสินค้า", previewProductName: "ชื่อสินค้า", previewProductDescription: "รายละเอียดสินค้าจะแสดงที่นี่", adminStockCount: "สต็อก: {count} ชิ้น", "adminPet.cat": "สำหรับแมว", "adminPet.dog": "สำหรับหมา", "adminPet.both": "สำหรับแมวและหมา", "adminAge.all": "ทุกช่วงวัย", "adminAge.young": "ลูกสุนัข / ลูกแมว", "adminAge.adult": "โตเต็มวัย", "adminAge.senior": "สูงวัย",
+  addProduct: "เพิ่มสินค้า", saveChanges: "บันทึกการแก้ไข", savingProduct: "กำลังบันทึก", clearForm: "ล้างฟอร์ม", cancelEdit: "ยกเลิกการแก้ไข", imageTooLarge: "รูปต้องมีขนาดไม่เกิน 1.5 MB", invalidImageType: "รูปต้องเป็น PNG, JPEG หรือ WebP", productAdded: "เพิ่มสินค้าแล้ว", productUpdated: "อัปเดตสินค้าแล้ว", productDeleted: "ลบสินค้าแล้ว", catalogSyncFailed: "ซิงก์รายการสินค้าล่าสุดไม่สำเร็จ",
+  productList: "รายการสินค้า", image: "รูป", product: "สินค้า", categoryPet: "หมวดหมู่ / สัตว์", price: "ราคา", actions: "การทำงาน", out: "หมด", edit: "แก้ไข", delete: "ลบ", editProduct: "แก้ไข {name}", deleteProduct: "ลบ {name}", confirmDeleteProduct: "ยืนยันการลบ {name}?", noProductsAdmin: "ยังไม่มีสินค้า",
+});
+
+Object.assign(messages.en, {
+  manageProducts: "Manage Products", manageProductsIntro: "Add, edit, and maintain PAP product stock.", productInformation: "Product Information", productImage: "Product Image", imageHelp: "PNG, JPEG, or WebP up to 1.5 MB", productName: "Product Name", productDescription: "Product Description", productPrice: "Price (THB)", stockQuantity: "Stock Quantity", category: "Category", featuredProduct: "Featured product",
+  livePreview: "Live Preview", previewProductName: "Product Name", previewProductDescription: "Product description will appear here.", adminStockCount: "Stock: {count} items", "adminPet.cat": "For Cat", "adminPet.dog": "For Dog", "adminPet.both": "For Cat & Dog", "adminAge.all": "All Ages", "adminAge.young": "Puppy / Kitten", "adminAge.adult": "Adult", "adminAge.senior": "Senior",
+  addProduct: "Add Product", saveChanges: "Save Changes", savingProduct: "Saving", clearForm: "Clear", cancelEdit: "Cancel Edit", imageTooLarge: "Image must be no larger than 1.5 MB.", invalidImageType: "Image must be PNG, JPEG, or WebP.", productAdded: "Product added", productUpdated: "Product updated", productDeleted: "Product deleted", catalogSyncFailed: "Latest product sync failed",
+  productList: "Product List", image: "Image", product: "Product", categoryPet: "Category / Pet", price: "Price", actions: "Actions", out: "Out", edit: "Edit", delete: "Delete", editProduct: "Edit {name}", deleteProduct: "Delete {name}", confirmDeleteProduct: "Are you sure you want to delete {name}?", noProductsAdmin: "No products yet",
+});
+
+Object.assign(messages.th, {
   adminLogin: "เข้าสู่ระบบผู้ดูแล", accessCode: "รหัสผ่านผู้ดูแล", checkingCode: "กำลังตรวจสอบ", continueAdmin: "ดำเนินการต่อ", closeAdminLogin: "ปิดหน้าต่างเข้าสู่ระบบผู้ดูแล",
   adminNavigation: "เมนูผู้ดูแล", logoutAdmin: "ออกจากระบบผู้ดูแล", loggingOutAdmin: "กำลังออกจากระบบ", checkingAdmin: "กำลังตรวจสอบสิทธิ์ผู้ดูแล", adminSessionError: "ไม่สามารถตรวจสอบสิทธิ์ผู้ดูแลได้",
   adminDashboard: "แดชบอร์ดผู้ดูแล", adminFoundation: "ระบบผู้ดูแลพร้อมแล้ว การจัดการสินค้าและคำสั่งซื้อจะเพิ่มในขั้นถัดไป",

@@ -8,7 +8,7 @@ vi.mock("../../services/api", () => ({ getAdminSession: vi.fn(), loginAdmin: vi.
 
 function Probe() {
   const admin = useAdmin();
-  return <><span data-testid="state">{admin.status}:{String(admin.authenticated)}</span><button onClick={() => admin.login("code")}>login</button><button onClick={() => admin.logout()}>logout</button><button onClick={admin.retry}>retry</button></>;
+  return <><span data-testid="state">{admin.status}:{String(admin.authenticated)}</span><button onClick={() => admin.login("code")}>login</button><button onClick={() => admin.logout()}>logout</button><button onClick={admin.retry}>retry</button><button onClick={admin.expireAdminSession}>expire</button></>;
 }
 
 beforeEach(() => {
@@ -67,4 +67,13 @@ it("does not let a stale retry bootstrap overwrite a successful logout", async (
   expect(await screen.findByText("ready:false")).toBeInTheDocument();
   resolveRetry({ authenticated: true });
   await waitFor(() => expect(screen.getByTestId("state")).toHaveTextContent("ready:false"));
+});
+
+it("expires only local admin state without calling logout", async () => {
+  getAdminSession.mockResolvedValue({ authenticated: true });
+  render(<AdminProvider><Probe /></AdminProvider>);
+  expect(await screen.findByText("ready:true")).toBeInTheDocument();
+  await userEvent.click(screen.getByRole("button", { name: "expire" }));
+  expect(screen.getByTestId("state")).toHaveTextContent("ready:false");
+  expect(logoutAdmin).not.toHaveBeenCalled();
 });
