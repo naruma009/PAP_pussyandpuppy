@@ -160,6 +160,7 @@
     const catCategories = ["Cat Litter","Litter Box","Cat Toilet"];
     const categories = mode === "dog" ? baseCategories : [...baseCategories, ...catCategories];
     const petTypes = mode === "cat" ? ["cat","both"] : mode === "dog" ? ["dog","both"] : ["cat","dog","both"];
+    const defaultPetType = petTypes[0];
     const filterBar = document.querySelector(".filters");
     const eligibleForMode = (item) => mode === "both" || item.petType === mode || item.petType === "both";
     const featuredOnly = new URLSearchParams(location.search).get("featured") === "1";
@@ -170,20 +171,20 @@
     if (params.get("reset") === "1") { sessionStorage.removeItem(storageKey); history.replaceState({}, "", `${location.pathname}${location.hash}`); }
     let saved = {}; try { saved = JSON.parse(sessionStorage.getItem(storageKey)) || {}; } catch {}
     const state = {
-      category:categories.includes(saved.category) ? saved.category : "all", petType:petTypes.includes(saved.petType) ? saved.petType : "all",
+      category:categories.includes(saved.category) ? saved.category : "all", petType:petTypes.includes(saved.petType) ? saved.petType : defaultPetType,
       age:["all","young","adult","senior"].includes(saved.age) ? saved.age : "all", hideOutOfStock:typeof saved.hideOutOfStock === "boolean" ? saved.hideOutOfStock : saved.stock === "in",
       sort:["default","price-asc","price-desc","name","newest"].includes(saved.sort) ? saved.sort : "default", favoritesOnly:Boolean(saved.favoritesOnly),
       search:String(saved.search || ""), min:Math.max(availableMin, Number.isFinite(Number(saved.min)) ? Number(saved.min) : availableMin), max:Math.min(availableMax, Number.isFinite(Number(saved.max)) ? Number(saved.max) : availableMax)
     };
     if (state.min > state.max) { state.min = availableMin; state.max = availableMax; }
     const youngLabel = mode === "cat" ? "Kitten" : mode === "dog" ? "Puppy" : "Puppy / Kitten";
-    const petOptions = petTypes.map((type) => `<option value="${type}">${type === "cat" ? uiText("catOnly", "Cat") : type === "dog" ? uiText("dogOnly", "Dog") : uiText("bothOnly", "Both")}</option>`).join("");
+    const petOptions = petTypes.map((type) => `<option value="${type}">${type === "cat" ? uiText("catOnly", "Cat") : type === "dog" ? uiText("dogOnly", "Dog") : uiText("bothOnly", "Cat & Dog")}</option>`).join("");
     filterBar.innerHTML = `<div class="category-chips">${[`<button class="filter-button" data-category="all">${uiText("allProducts", "All Products")}</button>`, ...categories.map((category) => `<button class="filter-button" data-category="${escapeHtml(category)}">${escapeHtml(categoryLabel(category))}</button>`)].join("")}</div><div class="filter-tools">
       <label class="age-filter discovery-search">${uiText("search", "Search")}<span><input data-product-search type="search" value="${escapeHtml(state.search)}" placeholder="${uiText("searchPlaceholder", "ค้นหาชื่อ รายละเอียด หรือหมวดหมู่")}"><button type="button" data-clear-search aria-label="${uiText("clearSearch", "ล้างคำค้นหา")}">×</button></span></label>
-      <label class="age-filter">${uiText("petType", "Pet Type")}<select data-pet-filter><option value="all">${uiText("allRelevantPets", "All relevant pets")}</option>${petOptions}</select></label>
-      <label class="age-filter">${uiText("age", "Age")}<select data-age-filter><option value="all">${window.PAPUI?.language === "en" ? "All Ages" : "ทุกช่วงวัย"}</option><option value="young">${window.PAPUI?.language === "en" ? youngLabel : mode === "cat" ? "ลูกแมว" : mode === "dog" ? "ลูกสุนัข" : "ลูกสุนัข / ลูกแมว"}</option><option value="adult">${uiText("adult", "Adult")}</option><option value="senior">${uiText("senior", "Senior")}</option></select></label>
+      <label class="age-filter pet-type-filter">${uiText("petType", "Pet Type")}<select data-pet-filter>${petOptions}</select></label>
+      <label class="age-filter product-age-filter">${uiText("age", "Age")}<select data-age-filter><option value="all">${window.PAPUI?.language === "en" ? "All Ages" : "ทุกช่วงวัย"}</option><option value="young">${window.PAPUI?.language === "en" ? youngLabel : mode === "cat" ? "ลูกแมว" : mode === "dog" ? "ลูกสุนัข" : "ลูกสุนัข / ลูกแมว"}</option><option value="adult">${uiText("adult", "Adult")}</option><option value="senior">${uiText("senior", "Senior")}</option></select></label>
       <label class="stock-toggle"><input data-hide-out-of-stock type="checkbox" ${state.hideOutOfStock ? "checked" : ""}><span aria-hidden="true"></span><strong>${uiText("hideOutOfStock", "ซ่อนสินค้าที่หมด")}</strong></label>
-      <label class="age-filter">${uiText("sort", "Sort")}<select data-sort><option value="default">${uiText("recommended", "Recommended")}</option><option value="price-asc">${uiText("priceLowHigh", "Price: Low to High")}</option><option value="price-desc">${uiText("priceHighLow", "Price: High to Low")}</option><option value="name">${uiText("nameAZ", "Name: A to Z")}</option><option value="newest">${uiText("newest", "Newest")}</option></select></label>
+      <label class="age-filter sort-filter">${uiText("sort", "Sort")}<select data-sort><option value="default">${uiText("recommended", "Recommended")}</option><option value="price-asc">${uiText("priceLowHigh", "Price: Low to High")}</option><option value="price-desc">${uiText("priceHighLow", "Price: High to Low")}</option><option value="name">${uiText("nameAZ", "Name: A to Z")}</option><option value="newest">${uiText("newest", "Newest")}</option></select></label>
       <div class="price-filter"><div><span>${uiText("priceRange", "Price Range")}</span><strong data-price-output></strong></div><div class="dual-range"><div class="range-track"></div><input data-price-min type="range" min="${availableMin}" max="${availableMax}" value="${state.min}"><input data-price-max type="range" min="${availableMin}" max="${availableMax}" value="${state.max}"></div></div>
       <div class="favorite-filter-wrap"><button class="favorite-filter" type="button" data-favorites-only aria-pressed="${state.favoritesOnly}">♥ ${uiText("favoritesOnly", "Favorites only")}</button><small>${uiText("favoritesDeviceOnly", "บันทึกเฉพาะในอุปกรณ์นี้ ไม่ซิงก์กับบัญชี")}</small></div>
       <button class="reset-filters" type="button">${uiText("resetFilters", "ล้างตัวกรอง")}</button>
@@ -215,7 +216,7 @@
     favoriteFilter.addEventListener("click", () => { state.favoritesOnly = !state.favoritesOnly; saveAndDraw(); });
     minInput.addEventListener("input", () => { state.min = Math.min(Number(minInput.value), state.max); saveAndDraw(); });
     maxInput.addEventListener("input", () => { state.max = Math.max(Number(maxInput.value), state.min); saveAndDraw(); });
-    filterBar.querySelector(".reset-filters").addEventListener("click", () => { Object.assign(state,{ category:"all",petType:"all",age:"all",hideOutOfStock:false,sort:"default",favoritesOnly:false,search:"",min:availableMin,max:availableMax }); searchInput.value=""; saveAndDraw(); });
+    filterBar.querySelector(".reset-filters").addEventListener("click", () => { Object.assign(state,{ category:"all",petType:defaultPetType,age:"all",hideOutOfStock:false,sort:"default",favoritesOnly:false,search:"",min:availableMin,max:availableMax }); searchInput.value=""; saveAndDraw(); });
     window.addEventListener("pap-favorites-change", saveAndDraw);
     saveAndDraw();
   }
