@@ -213,7 +213,7 @@
   document.addEventListener("DOMContentLoaded", async () => {
     document.querySelectorAll('a[href="admin.html"]').forEach((link) => { link.hidden = true; });
     if (!location.pathname.endsWith("/admin.html") && !store.hasMode()) { location.replace("index.html"); return; }
-    try { await store.load(); applyTheme(); await renderAdminNavigation(); bindShared(); renderHome(); renderProducts(); renderDetail(); renderCart(); bindLogin(); }
+    try { await store.load(); applyTheme(); await renderAdminNavigation(); bindShared(); renderHome(); renderProducts(); renderDetail(); renderCart(); bindLogin(); document.documentElement.dataset.uiReady = ""; }
     catch (error) { document.body.insertAdjacentHTML("beforeend", `<div class="toast">Backend unavailable: ${escapeHtml(error.message)}</div>`); }
   });
 })();
