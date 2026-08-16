@@ -87,3 +87,15 @@ Object.assign(messages.en, {
   adminNavigation: "Admin navigation", logoutAdmin: "Logout Admin", loggingOutAdmin: "Logging out", checkingAdmin: "Checking admin access", adminSessionError: "Admin access could not be checked",
   adminDashboard: "Admin Dashboard", adminFoundation: "Admin access is ready. Product and order management will be added in the next phase.",
 });
+
+Object.assign(messages.th, {
+  personalityFeed: "🍪 ให้อาหาร", personalityPet: "🤍 ลูบหัว", personalityChatAsk: "ถามน้อง PAP", personalityChatNote: "พวกน้องตอบตามภาษาของพวกน้อง — ไม่ใช่ AI",
+  personalityClose: "ปิด", personalitySend: "ส่ง", personalityTyping: "กำลังพิมพ์", personalityChatMessage: "ข้อความถึงน้อง", personalityChatPlaceholder: "อยากรู้อะไร ถามน้องได้เลย",
+  personalityMoodCta: "วันนี้น้องคิดอะไรอยู่?", personalityMoodWho: "วันนี้อยากวิเคราะห์ใคร?", personalityCatPet: "🐱 น้องแมว", personalityDogPet: "🐶 น้องหมา", personalityQuestion: "คำถาม", personalityRecommend: "แนะนำหมวดหมู่:",
+});
+
+Object.assign(messages.en, {
+  personalityFeed: "🍪 Feed", personalityPet: "🤍 Pet", personalityChatAsk: "Ask PAP Pet", personalityChatNote: "Pet-language replies — not AI",
+  personalityClose: "Close", personalitySend: "Send", personalityTyping: "Typing", personalityChatMessage: "Message to your pet", personalityChatPlaceholder: "Ask your pet anything",
+  personalityMoodCta: "What is your pet thinking today?", personalityMoodWho: "Who would you like to analyze today?", personalityCatPet: "🐱 Cat", personalityDogPet: "🐶 Dog", personalityQuestion: "Question", personalityRecommend: "Recommended category:",
+});

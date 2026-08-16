@@ -2,7 +2,7 @@ import { IDLE_STATES, isPerchableRect, randomItem, randomWait } from "./mascotBe
 
 export function createMascotController({ element, kind, index, mobile, random = Math.random, onDraw }) {
   const model = { state:"idle", direction:index ? "left" : "right", x:index ? innerWidth - 120 : 28, y:10 + index * 6, duration:0, lookX:0, lookY:0 };
-  let timer = 0, targetCard = null, perchRatio = index ? .72 : .25, perchSteps = 0, destroyed = false, peers = [];
+  let timer = 0, targetCard = null, perchRatio = index ? .72 : .25, perchSteps = 0, destroyed = false, running = false, peers = [], lockOwner = null, interactionSnapshot = null;
   const draw = () => { if (!destroyed) onDraw(model); };
   const schedule = (callback, delay) => { clearTimeout(timer); timer = window.setTimeout(callback, delay); };
   const groundY = () => 10 + index * 6;
@@ -17,13 +17,21 @@ export function createMascotController({ element, kind, index, mobile, random = 
   const approachCard = (cards) => { const freeCards = cards.filter((card) => !peers.some((peer) => peer.targetCard() === card)); targetCard = randomItem(freeCards.length ? freeCards : cards, random); perchRatio = kind === "cat" ? .18 + random() * .64 : .28 + random() * .44; perchSteps = 0; const rect = targetCard.getBoundingClientRect(); const target = Math.max(12, Math.min(innerWidth - 82, rect.left + (model.x < rect.left ? -34 : rect.width + 10))); const distance = Math.abs(target - model.x); Object.assign(model, { direction:target < model.x ? "left" : "right", state:"approach-card", duration:Math.max(700, Math.min(3000, distance * 6)), x:target, y:groundY() }); draw(); schedule(jumpUp, model.duration + 180); };
   function next() { if (destroyed) return; const cards = visibleCards(); if (!mobile && cards.length && random() < (kind === "cat" ? .46 : .2)) approachCard(cards); else if (random() < (mobile ? .38 : .58)) walk(); else rest(); }
   const api = {
+    kind,
+    element,
     setPeers(nextPeers) { peers = nextPeers.filter((peer) => peer !== api); },
     targetCard:() => targetCard,
     x:() => model.x,
-    start() { schedule(next, randomWait(900, 1400, random)); },
+    start() { if (destroyed || running) return; running = true; schedule(next, randomWait(900, 1400, random)); },
+    isLocked() { return Boolean(lockOwner); },
+    beginInteraction(owner) { if (destroyed || lockOwner) return false; lockOwner = owner; interactionSnapshot = { state:model.state, targetCard }; clearTimeout(timer); model.duration = 0; draw(); return true; },
+    showInteractionState(owner, state) { if (destroyed || lockOwner !== owner) return false; model.state = state; model.duration = 180; draw(); return true; },
+    endInteraction(owner) { if (destroyed || lockOwner !== owner) return false; const snapshot = interactionSnapshot; interactionSnapshot = null; lockOwner = null; if (!running) { model.state = snapshot?.state || "idle"; model.duration = 0; draw(); } else if (snapshot?.targetCard?.isConnected) { targetCard = snapshot.targetCard; perch(); } else if (IDLE_STATES.includes(snapshot?.state)) { model.state = snapshot.state; model.duration = 180; draw(); schedule(next, randomWait(900, 1400, random)); } else walk(); return true; },
+    pauseForResponse() { return api.beginInteraction("chat"); },
+    reactAndResume() { if (!api.showInteractionState("chat", random() < .7 ? "happy" : "curious")) return false; schedule(() => api.endInteraction("chat"), 1300); return true; },
     look(clientX, clientY) { if (mobile || destroyed) return; const rect = element.getBoundingClientRect(); model.lookX = Math.max(-1, Math.min(1, (clientX - (rect.left + rect.width / 2)) / 220)).toFixed(2); model.lookY = Math.max(-1, Math.min(1, (clientY - (rect.top + rect.height / 2)) / 180)).toFixed(2); draw(); },
     syncWithTarget() { if (!targetCard || destroyed) return; const rect = cardRect(); if (!rect) { jumpDown(true); return; } Object.assign(model, { ...perchPoint(rect), duration:90 }); draw(); },
-    destroy() { destroyed = true; clearTimeout(timer); targetCard = null; },
+    destroy() { destroyed = true; clearTimeout(timer); targetCard = null; lockOwner = null; interactionSnapshot = null; },
   };
   return api;
 }

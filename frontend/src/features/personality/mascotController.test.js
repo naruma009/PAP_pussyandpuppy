@@ -25,4 +25,21 @@ describe("mascot controller", () => {
     controller.start(); vi.advanceTimersByTime(900);
     expect(draws.at(-1).state).toBe("ground-walk"); controller.destroy();
   });
+  it("isolates lock ownership and resumes reactions after 1300 ms", () => {
+    vi.useFakeTimers(); const draws = []; const controller = createMascotController({ element:document.createElement("button"), kind:"dog", index:0, mobile:false, random:() => .69, onDraw:(model) => draws.push({ ...model }) });
+    expect(controller.beginInteraction("direct-feed")).toBe(true); expect(controller.beginInteraction("chat")).toBe(false); expect(controller.showInteractionState("chat", "curious")).toBe(false);
+    expect(controller.endInteraction("chat")).toBe(false); expect(controller.endInteraction("direct-feed")).toBe(true);
+    expect(controller.pauseForResponse()).toBe(true); expect(controller.reactAndResume()).toBe(true); expect(draws.at(-1).state).toBe("happy");
+    vi.advanceTimersByTime(1299); expect(controller.isLocked()).toBe(true); vi.advanceTimersByTime(1); expect(controller.isLocked()).toBe(false); controller.destroy();
+  });
+  it("uses curious at the 70 percent boundary and ignores stale work after destroy", () => {
+    vi.useFakeTimers(); const draws = []; const controller = createMascotController({ element:document.createElement("button"), kind:"cat", index:0, mobile:false, random:() => .7, onDraw:(model) => draws.push({ ...model }) });
+    controller.pauseForResponse(); controller.reactAndResume(); expect(draws.at(-1).state).toBe("curious"); controller.destroy(); const count = draws.length; vi.runAllTimers(); expect(draws).toHaveLength(count);
+  });
+  it("releases a chat lock without starting movement when reduced-motion setup never started the controller", () => {
+    vi.useFakeTimers(); const draws = []; const controller = createMascotController({ element:document.createElement("button"), kind:"cat", index:0, mobile:false, random:() => 0, onDraw:(model) => draws.push({ ...model }) });
+    controller.pauseForResponse(); controller.reactAndResume(); vi.advanceTimersByTime(1300);
+    expect(controller.isLocked()).toBe(false); expect(draws.at(-1).state).toBe("idle"); const count = draws.length;
+    vi.runAllTimers(); expect(draws).toHaveLength(count); controller.destroy();
+  });
 });

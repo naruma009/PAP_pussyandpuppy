@@ -48,8 +48,8 @@ export default function PreferenceProvider({ children }) {
         update("sound", "pap-sound", next);
         if (next === "on") playCommerceSound(true);
       },
-      playSound(type) {
-        return playCommerceSound(preferences.sound === "on", type);
+      playSound(type, species) {
+        return playCommerceSound(preferences.sound === "on", type, species);
       },
     };
   }, [preferences]);
