@@ -59,3 +59,15 @@ Object.assign(messages.en, {
   myOrders: "My Orders", loadingOrders: "Loading orders", ordersUnavailable: "Orders could not be loaded", noOrders: "You have no orders yet",
   ...Object.fromEntries(["Food", "Treats", "Toys", "Beds", "Grooming", "Clothing", "Accessories", "Health & Care", "Other", "Cat Litter", "Litter Box", "Cat Toilet"].map((category) => [`category.${category}`, category])),
 });
+
+Object.assign(messages.th, {
+  adminLogin: "เข้าสู่ระบบผู้ดูแล", accessCode: "รหัสผ่านผู้ดูแล", checkingCode: "กำลังตรวจสอบ", continueAdmin: "ดำเนินการต่อ", closeAdminLogin: "ปิดหน้าต่างเข้าสู่ระบบผู้ดูแล",
+  adminNavigation: "เมนูผู้ดูแล", logoutAdmin: "ออกจากระบบผู้ดูแล", loggingOutAdmin: "กำลังออกจากระบบ", checkingAdmin: "กำลังตรวจสอบสิทธิ์ผู้ดูแล", adminSessionError: "ไม่สามารถตรวจสอบสิทธิ์ผู้ดูแลได้",
+  adminDashboard: "แดชบอร์ดผู้ดูแล", adminFoundation: "ระบบผู้ดูแลพร้อมแล้ว การจัดการสินค้าและคำสั่งซื้อจะเพิ่มในขั้นถัดไป",
+});
+
+Object.assign(messages.en, {
+  adminLogin: "Admin Login", accessCode: "Access code", checkingCode: "Checking", continueAdmin: "Continue", closeAdminLogin: "Close admin login",
+  adminNavigation: "Admin navigation", logoutAdmin: "Logout Admin", loggingOutAdmin: "Logging out", checkingAdmin: "Checking admin access", adminSessionError: "Admin access could not be checked",
+  adminDashboard: "Admin Dashboard", adminFoundation: "Admin access is ready. Product and order management will be added in the next phase.",
+});

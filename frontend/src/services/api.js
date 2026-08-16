@@ -48,3 +48,15 @@ export async function createOrder(payload) {
 export async function getCustomerOrders(signal) {
   return apiRequest("/customer/orders", { signal });
 }
+
+export async function getAdminSession(signal) {
+  return apiRequest("/admin/session", { signal, expectedStatus: 200 });
+}
+
+export async function loginAdmin(code, signal) {
+  return apiRequest("/admin/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code }), signal, expectedStatus: 200 });
+}
+
+export async function logoutAdmin(signal) {
+  return apiRequest("/admin/logout", { method: "POST", signal, expectedStatus: 204 });
+}

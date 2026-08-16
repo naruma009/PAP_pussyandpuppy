@@ -10,6 +10,14 @@ import CartPage from "./pages/CartPage";
 import LoginPage from "./pages/LoginPage";
 import CheckoutPage from "./pages/CheckoutPage";
 import CustomerOrdersPage from "./pages/CustomerOrdersPage";
+import AdminPage from "./pages/AdminPage";
+import AdminProvider from "./features/admin/AdminProvider";
+import AdminGuard from "./features/admin/AdminGuard";
+import AdminAppShell from "./components/admin/AdminAppShell";
+
+function AdminRoute() {
+  return <AdminProvider><AdminGuard><AdminAppShell><AdminPage /></AdminAppShell></AdminGuard></AdminProvider>;
+}
 
 function LegacyProductAlias() {
   const [params] = useSearchParams();
@@ -48,6 +56,8 @@ export const routes = [
       { path: "checkout.html", element: <LegacyAlias to="/checkout" /> },
     ],
   },
+  { path: "/admin", element: <AdminRoute /> },
+  { path: "/admin.html", element: <LegacyAlias to="/admin" /> },
   { path: "*", element: <NotFoundPage /> },
 ];
 

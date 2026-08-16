@@ -1,5 +1,5 @@
 import { afterEach, expect, it, vi } from "vitest";
-import { ApiError, apiRequest, createOrder, getCustomerOrders } from "./api";
+import { ApiError, apiRequest, createOrder, getCustomerOrders, loginAdmin, logoutAdmin } from "./api";
 
 afterEach(() => vi.restoreAllMocks());
 
@@ -44,4 +44,15 @@ it("preserves the FastAPI error contract and 204 behavior", async () => {
   expect(ApiError).toBeDefined();
   globalThis.fetch.mockResolvedValueOnce(new Response(null, { status: 204 }));
   await expect(apiRequest("/logout", { method: "POST" })).resolves.toBeNull();
+});
+
+it("requires exact admin login 200 and logout 204 statuses", async () => {
+  const fetchMock = vi.spyOn(globalThis, "fetch");
+  fetchMock.mockResolvedValueOnce(Response.json({ authenticated: true }, { status: 202 }));
+  await expect(loginAdmin("code")).rejects.toMatchObject({ status: 202 });
+  fetchMock.mockResolvedValueOnce(new Response(null, { status: 200 }));
+  await expect(logoutAdmin()).rejects.toMatchObject({ status: 200 });
+  fetchMock.mockResolvedValueOnce(new Response(null, { status: 204 }));
+  await expect(logoutAdmin()).resolves.toBeNull();
+  expect(fetchMock.mock.calls.every(([, options]) => options.credentials === "same-origin")).toBe(true);
 });
