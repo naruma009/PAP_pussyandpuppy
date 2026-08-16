@@ -1,15 +1,48 @@
-import { createBrowserRouter } from "react-router-dom";
+import { Navigate, createBrowserRouter, useLocation, useSearchParams } from "react-router-dom";
 import App from "./App";
 import HealthPage from "./pages/HealthPage";
-import MigrationHomePage from "./pages/MigrationHomePage";
+import NotFoundPage from "./pages/NotFoundPage";
+import PetSelectionPage from "./pages/PetSelectionPage";
+import PlaceholderPage from "./pages/PlaceholderPage";
 
-export const router = createBrowserRouter([
+function LegacyProductAlias() {
+  const [params] = useSearchParams();
+  const location = useLocation();
+  const id = params.get("id");
+  params.delete("id");
+  const search = params.toString();
+  return <Navigate replace to={{ pathname: id ? `/products/${encodeURIComponent(id)}` : "/products", search: search ? `?${search}` : "", hash: location.hash }} />;
+}
+
+function LegacyAlias({ to }) {
+  const location = useLocation();
+  return <Navigate replace to={{ pathname: to, search: location.search, hash: location.hash }} />;
+}
+
+export const routes = [
+  { path: "/", element: <PetSelectionPage /> },
+  { path: "/index.html", element: <LegacyAlias to="/" /> },
   {
     path: "/",
     element: <App />,
     children: [
-      { index: true, element: <MigrationHomePage /> },
+      { path: "home", element: <PlaceholderPage page="home" /> },
+      { path: "products", element: <PlaceholderPage page="products" /> },
+      { path: "products/:productId", element: <PlaceholderPage page="product detail" /> },
+      { path: "cart", element: <PlaceholderPage page="cart" /> },
+      { path: "login", element: <PlaceholderPage page="login" /> },
+      { path: "checkout", element: <PlaceholderPage page="checkout" /> },
+      { path: "account/orders", element: <PlaceholderPage page="customer orders" /> },
       { path: "health", element: <HealthPage /> },
+      { path: "home.html", element: <LegacyAlias to="/home" /> },
+      { path: "products.html", element: <LegacyAlias to="/products" /> },
+      { path: "product.html", element: <LegacyProductAlias /> },
+      { path: "cart.html", element: <LegacyAlias to="/cart" /> },
+      { path: "login.html", element: <LegacyAlias to="/login" /> },
+      { path: "checkout.html", element: <LegacyAlias to="/checkout" /> },
     ],
   },
-]);
+  { path: "*", element: <NotFoundPage /> },
+];
+
+export const router = createBrowserRouter(routes);

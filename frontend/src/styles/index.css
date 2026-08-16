@@ -1,18 +1,5 @@
-:root {
-  font-family: system-ui, sans-serif;
-  color: #29213a;
-  background: #fffaf4;
-}
-
-* { box-sizing: border-box; }
-body { margin: 0; }
-.migration-shell { width: min(760px, calc(100% - 32px)); margin: 0 auto; }
-header { display: flex; justify-content: space-between; align-items: center; padding: 24px 0; }
-nav { display: flex; gap: 16px; }
-nav a { color: #695e78; }
-nav a.active { color: #8b3caf; font-weight: 700; }
-main { padding: 64px 0; }
-.eyebrow { color: #8b3caf; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; }
-.health-status { display: block; margin-top: 24px; padding: 16px; border: 1px solid #ded8e5; border-radius: 12px; }
-.health-status--ok { border-color: #2f8b49; background: #effaf2; }
-.health-status--error { border-color: #bd394b; background: #fff0f2; }
+@import "./tokens.css";
+@import "./commerce-shell.css";
+@import "./preferences.css";
+@import "./pet-selection.css";
+@import "./react-states.css";

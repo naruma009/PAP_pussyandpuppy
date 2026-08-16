@@ -11,7 +11,16 @@ export default defineConfig(({ mode }) => {
           target: env.VITE_DEV_API_TARGET || "http://127.0.0.1:8000",
           changeOrigin: true,
         },
+        "/uploads": {
+          target: env.VITE_DEV_API_TARGET || "http://127.0.0.1:8000",
+          changeOrigin: true,
+        },
       },
+    },
+    test: {
+      environment: "jsdom",
+      setupFiles: "./src/test/setup.js",
+      css: true,
     },
   };
 });

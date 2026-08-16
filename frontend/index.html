@@ -1,10 +1,34 @@
 <!doctype html>
-<html lang="th">
+<html lang="th" class="ui-booting">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="PAP React migration scaffold" />
-    <title>PAP React Migration</title>
+    <meta name="description" content="PAP ร้านของน่ารักสำหรับหมาและแมว" />
+    <title>PAP — Pussy and Puppy</title>
+    <style>html.ui-booting body{visibility:hidden}</style>
+    <script>
+      (function () {
+        var root = document.documentElement;
+        var read = function (storage, key, allowed, fallback) {
+          try {
+            var value = storage.getItem(key);
+            return allowed.indexOf(value) >= 0 ? value : fallback;
+          } catch (_error) {
+            return fallback;
+          }
+        };
+        var language = read(localStorage, "pap-language", ["th", "en"], "th");
+        var theme = read(localStorage, "pap-theme", ["light", "dark"], "light");
+        var mode = read(localStorage, "pap-mode", ["cat", "dog", "both"], "");
+        if (!mode) mode = read(sessionStorage, "pap-mode", ["cat", "dog", "both"], "both");
+        root.lang = language;
+        root.dataset.language = language;
+        root.dataset.theme = theme;
+        root.dataset.pet = mode;
+        window.__PAP_PREFERENCES__ = { language: language, theme: theme, petMode: mode };
+        window.setTimeout(function () { root.classList.remove("ui-booting"); }, 900);
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
