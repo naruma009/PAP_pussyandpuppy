@@ -21,3 +21,10 @@ uploads/products/*
 .idea/
 .DS_Store
 Thumbs.db
+
+# React/FastAPI migration build and test artifacts
+frontend/node_modules/
+frontend/dist/
+backend/.venv/
+.pytest_cache/
+.coverage
