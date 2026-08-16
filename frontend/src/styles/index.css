@@ -2,6 +2,7 @@
 @import "./commerce-shell.css";
 @import "./preferences.css";
 @import "./pet-selection.css";
+@import "./pet-selection-transition.css";
 @import "./react-states.css";
 @import "./catalog.css";
 @import "./cart.css";
@@ -9,3 +10,4 @@
 @import "./checkout.css";
 @import "./orders.css";
 @import "./admin.css";
+@import "./personality.css";

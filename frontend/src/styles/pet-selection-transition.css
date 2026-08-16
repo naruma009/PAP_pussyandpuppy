@@ -1,0 +1,4 @@
+.pet-choice.chosen .pet{animation:pet-choice-happy .25s ease-in-out 3}
+.pet-selection-page.leaving .pet-choice:not(.chosen){opacity:.2;transform:scale(.9)}
+@keyframes pet-choice-happy{50%{transform:translateY(-22px) rotate(8deg) scale(1.05)}}
+@media(prefers-reduced-motion:reduce){.pet-choice.chosen .pet{animation:none}}

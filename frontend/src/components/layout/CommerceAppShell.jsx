@@ -2,6 +2,7 @@ import { Outlet } from "react-router-dom";
 import SiteFooter from "./SiteFooter";
 import SiteHeader from "./SiteHeader";
 import CommerceNotice from "../commerce/CommerceNotice";
+import PersonalityExperience from "../personality/PersonalityExperience";
 
 export default function CommerceAppShell() {
   return (
@@ -11,6 +12,7 @@ export default function CommerceAppShell() {
       <main id="main"><Outlet /></main>
       <SiteFooter />
       <CommerceNotice />
+      <PersonalityExperience />
     </div>
   );
 }
