@@ -8,21 +8,50 @@ const randomItem = (items) => items[Math.floor(Math.random() * items.length)];
 const wait = (minimum, spread) => minimum + Math.floor(Math.random() * spread);
 export const mascotKindsForMode = (mode) => mode === "both" ? ["cat", "dog"] : [mode];
 export const chatResponderForMode = (mode) => mode === "both" ? randomItem(["cat", "dog"]) : mode;
+export const isPerchableRect = (rect, viewportHeight) => rect.width > 100 && rect.top > 82 && rect.top < viewportHeight - 105 && rect.bottom > 120;
 
 class MascotController {
   constructor(kind, stage, index, reducedMotion, mobile) {
     this.kind = kind;
+    this.index = index;
     this.visual = createMascotVisual(kind);
     this.model = { state:"idle", direction:index ? "left" : "right", x:index ? innerWidth - 120 : 28, y:10 + index * 6, duration:0, lookX:0, lookY:0 };
     this.reducedMotion = reducedMotion;
     this.mobile = mobile;
     this.timer = 0;
     this.paused = false;
+    this.targetCard = null;
+    this.perchRatio = index ? .72 : .25;
+    this.perchSteps = 0;
+    this.peers = [];
     stage.append(this.visual.root);
     this.draw();
   }
 
   draw() { renderMascot(this.visual, this.model); }
+  setPeers(peers) { this.peers = peers.filter((peer) => peer !== this); }
+  groundY() { return 10 + this.index * 6; }
+
+  visibleCards() {
+    return [...document.querySelectorAll(".product-card")].filter((card) => {
+      const rect = card.getBoundingClientRect();
+      return isPerchableRect(rect, innerHeight);
+    });
+  }
+
+  cardRect() {
+    if (!this.targetCard?.isConnected) return null;
+    const rect = this.targetCard.getBoundingClientRect();
+    return isPerchableRect(rect, innerHeight) ? rect : null;
+  }
+
+  perchPoint(rect) {
+    const width = Math.max(1, rect.width - 72);
+    let x = rect.left + 8 + width * this.perchRatio;
+    const peer = this.peers.find((item) => item.targetCard === this.targetCard && Math.abs(item.model.x - x) < 78);
+    if (peer) x += x < rect.left + rect.width / 2 ? 82 : -82;
+    return { x:Math.max(8, Math.min(innerWidth - 76, x)), y:Math.max(this.groundY(), innerHeight - rect.top - 2) };
+  }
 
   start() {
     if (this.reducedMotion) { setMascotVisible(this.visual, false); return; }
@@ -36,34 +65,107 @@ class MascotController {
 
   next() {
     if (this.paused) return;
-    if (Math.random() < (this.mobile ? .38 : .58)) this.walk();
+    const cards = this.visibleCards();
+    const climbChance = this.kind === "cat" ? .46 : .2;
+    if (!this.mobile && cards.length && Math.random() < climbChance) this.approachCard(cards);
+    else if (Math.random() < (this.mobile ? .38 : .58)) this.walk();
     else this.rest();
+  }
+
+  approachCard(cards) {
+    const freeCards = cards.filter((card) => !this.peers.some((peer) => peer.targetCard === card));
+    this.targetCard = randomItem(freeCards.length ? freeCards : cards);
+    this.perchRatio = this.kind === "cat" ? .18 + Math.random() * .64 : .28 + Math.random() * .44;
+    this.perchSteps = 0;
+    const rect = this.targetCard.getBoundingClientRect();
+    const target = Math.max(12, Math.min(innerWidth - 82, rect.left + (this.model.x < rect.left ? -34 : rect.width + 10)));
+    const distance = Math.abs(target - this.model.x);
+    this.model.direction = target < this.model.x ? "left" : "right";
+    this.model.state = "approach-card";
+    this.model.duration = Math.max(700, Math.min(3000, distance * 6));
+    this.model.x = target;
+    this.model.y = this.groundY();
+    this.draw();
+    clearTimeout(this.timer);
+    this.timer = window.setTimeout(() => this.jumpUp(), this.model.duration + 180);
+  }
+
+  jumpUp() {
+    const rect = this.cardRect();
+    if (!rect) { this.targetCard = null; this.rest(); return; }
+    const point = this.perchPoint(rect);
+    this.model.direction = point.x < this.model.x ? "left" : "right";
+    this.model.state = "jump-up";
+    this.model.duration = this.kind === "cat" ? 620 : 760;
+    this.model.x = point.x;
+    this.model.y = point.y;
+    this.draw();
+    clearTimeout(this.timer);
+    this.timer = window.setTimeout(() => this.perch(), this.model.duration + 120);
+  }
+
+  perch() {
+    const rect = this.cardRect();
+    if (!rect) { this.jumpDown(true); return; }
+    this.perchSteps++;
+    if (this.perchSteps > (this.kind === "cat" ? 3 : 2) || Math.random() < .22) { this.jumpDown(); return; }
+    const states = this.kind === "cat" ? ["perch", "card-walk", "sit", "sleep", "curious"] : ["perch", "sit", "happy", "curious"];
+    this.model.state = randomItem(states);
+    if (this.model.state === "card-walk") {
+      const nextRatio = Math.max(.12, Math.min(.82, this.perchRatio + (Math.random() < .5 ? -.18 : .18)));
+      this.model.direction = nextRatio < this.perchRatio ? "left" : "right";
+      this.perchRatio = nextRatio;
+    }
+    const point = this.perchPoint(rect);
+    this.model.x = point.x;
+    this.model.y = point.y;
+    this.model.duration = this.model.state === "card-walk" ? 850 : 220;
+    this.draw();
+    clearTimeout(this.timer);
+    this.timer = window.setTimeout(() => this.perch(), wait(1500, 1800));
+  }
+
+  jumpDown(immediate = false) {
+    clearTimeout(this.timer);
+    this.targetCard = null;
+    this.perchSteps = 0;
+    this.model.state = "jump-down";
+    this.model.duration = immediate ? 260 : 620;
+    this.model.y = this.groundY();
+    this.draw();
+    this.timer = window.setTimeout(() => this.walk(), this.model.duration + 180);
+  }
+
+  syncWithTarget() {
+    if (!this.targetCard || this.paused) return;
+    const rect = this.cardRect();
+    if (!rect) { this.jumpDown(true); return; }
+    const point = this.perchPoint(rect);
+    this.model.x = point.x;
+    this.model.y = point.y;
+    this.model.duration = 90;
+    this.draw();
   }
 
   walk() {
     const margin = 18;
     const leave = !this.mobile && Math.random() < .13;
-    const cards = [...document.querySelectorAll(".product-card")].filter((card) => {
-      const rect = card.getBoundingClientRect();
-      return rect.bottom > 0 && rect.top < innerHeight;
-    });
     let target = leave ? (Math.random() < .5 ? -90 : innerWidth + 20) : margin + Math.random() * Math.max(1, innerWidth - 110);
-    if (!leave && cards.length && Math.random() < .32) {
-      const rect = randomItem(cards).getBoundingClientRect();
-      target = Math.max(margin, Math.min(innerWidth - 90, rect.left + rect.width * .5));
-    }
     const distance = Math.abs(target - this.model.x);
     this.model.direction = target < this.model.x ? "left" : "right";
-    this.model.state = "walk";
+    this.model.state = "ground-walk";
     this.model.duration = Math.max(1100, Math.min(5200, distance * (this.mobile ? 10 : 7)));
     this.model.x = target;
+    this.model.y = this.groundY();
     this.draw();
     this.schedule(this.model.duration + wait(350, 900));
   }
 
   rest() {
+    this.targetCard = null;
     this.model.state = randomItem(IDLE_STATES);
     this.model.duration = 240;
+    this.model.y = this.groundY();
     this.draw();
     this.schedule(wait(this.mobile ? 2600 : 1700, this.mobile ? 3000 : 2800));
   }
@@ -77,12 +179,13 @@ class MascotController {
   }
 
   react() {
+    const wasPerched = Boolean(this.targetCard && this.cardRect());
     this.paused = true;
     clearTimeout(this.timer);
     this.model.state = Math.random() < .7 ? "happy" : "curious";
     this.model.duration = 180;
     this.draw();
-    this.timer = window.setTimeout(() => { this.paused = false; this.rest(); }, 1300);
+    this.timer = window.setTimeout(() => { this.paused = false; wasPerched && this.targetCard ? this.perch() : this.rest(); }, 1300);
   }
 
   destroy() { clearTimeout(this.timer); this.visual.root.remove(); }
@@ -148,6 +251,7 @@ export function initPetExperience({ mode }) {
   document.body.append(stage);
   const kinds = mascotKindsForMode(mode);
   const controllers = kinds.map((kind, index) => new MascotController(kind, stage, index, reducedMotion, mobile));
+  controllers.forEach((controller) => controller.setPeers(controllers));
   controllers.forEach((controller) => controller.start());
   const chat = createChat(mode, controllers);
   let pointerFrame = 0;
@@ -156,12 +260,18 @@ export function initPetExperience({ mode }) {
     pointerFrame = requestAnimationFrame(() => { pointerFrame = 0; controllers.forEach((controller) => controller.look(event.clientX, event.clientY)); });
   };
   addEventListener("pointermove", onPointerMove, { passive:true });
+  let scrollFrame = 0;
+  const onScroll = () => {
+    if (scrollFrame || reducedMotion) return;
+    scrollFrame = requestAnimationFrame(() => { scrollFrame = 0; controllers.forEach((controller) => controller.syncWithTarget()); });
+  };
+  addEventListener("scroll", onScroll, { passive:true });
   const horrorObserver = new MutationObserver(() => {
     const hidden = document.body.classList.contains("horror");
     stage.hidden = hidden;
     chat.hidden = hidden;
   });
   horrorObserver.observe(document.body, { attributes:true, attributeFilter:["class"] });
-  addEventListener("pagehide", () => { removeEventListener("pointermove", onPointerMove); if (pointerFrame) cancelAnimationFrame(pointerFrame); horrorObserver.disconnect(); controllers.forEach((controller) => controller.destroy()); }, { once:true });
+  addEventListener("pagehide", () => { removeEventListener("pointermove", onPointerMove); removeEventListener("scroll", onScroll); if (pointerFrame) cancelAnimationFrame(pointerFrame); if (scrollFrame) cancelAnimationFrame(scrollFrame); horrorObserver.disconnect(); controllers.forEach((controller) => controller.destroy()); }, { once:true });
   return { controllers, chat };
 }

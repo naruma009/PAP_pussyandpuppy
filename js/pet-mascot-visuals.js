@@ -19,7 +19,7 @@ export function renderMascot(visual, model) {
   visual.root.dataset.state = model.state;
   visual.root.dataset.direction = model.direction;
   visual.root.style.setProperty("--mascot-x", `${Math.round(model.x)}px`);
-  visual.root.style.setProperty("--mascot-y", `${Math.round(model.y)}px`);
+  visual.root.style.setProperty("--mascot-y", `${Math.round(-model.y)}px`);
   visual.root.style.setProperty("--mascot-duration", `${model.duration}ms`);
   visual.root.style.setProperty("--look-x", String(model.lookX));
   visual.root.style.setProperty("--look-y", String(model.lookY));
