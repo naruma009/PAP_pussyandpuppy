@@ -128,6 +128,7 @@
     if (featuredLink) {
       featuredLink.href = "#featured-products";
       featuredLink.hidden = featured.length <= 4;
+      if (featured.length > 4) featuredLink.dataset.featuredReady = "";
       featuredLink.addEventListener("click", (event) => { event.preventDefault(); expanded = !expanded; featuredLink.textContent = expanded ? "แสดงน้อยลง ↑" : "ดูทั้งหมด →"; draw(); grid.scrollIntoView({ behavior:"smooth", block:"start" }); });
     }
     draw();
