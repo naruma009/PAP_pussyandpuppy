@@ -5,13 +5,14 @@
   function money(value) { return `฿${Number(value).toLocaleString("th-TH")}`; }
   function escapeHtml(value) { const node = document.createElement("span"); node.textContent = String(value); return node.innerHTML; }
   function label(petType) { return petType === "cat" ? "For Cat" : petType === "dog" ? "For Dog" : "For Cat & Dog"; }
+  function petBadge(petType) { const icon = petType === "cat" ? "🐱" : petType === "dog" ? "🐶" : "🐾"; return `<span class="pet-badge pet-badge--${petType}"><span aria-hidden="true">${icon}</span>${label(petType)}</span>`; }
   function visual(product, large = false) { return product.image ? `<img src="${product.image}" alt="${escapeHtml(product.name)}"${large ? " class=\"product-image-large\"" : ""}>` : `<span>${escapeHtml(product.emoji || "🐾")}</span>`; }
   function productCard(product) {
     const inCart = store.getCart().find((item) => item.id === product.id)?.qty || 0;
     const maxed = product.stock <= 0 || inCart >= product.stock;
     return `<article class="product-card" data-product-id="${product.id}">
       <a class="product-visual" href="product.html?id=${product.id}" aria-label="ดู ${escapeHtml(product.name)}">${visual(product)}</a>
-      <div class="product-info"><small>${escapeHtml(product.category)} · ${label(product.petType)}</small><h3><a href="product.html?id=${product.id}">${escapeHtml(product.name)}</a></h3>
+      <div class="product-info"><small class="product-kicker"><span>${escapeHtml(product.category)}</span>${petBadge(product.petType)}</small><h3><a href="product.html?id=${product.id}">${escapeHtml(product.name)}</a></h3>
       <p>${escapeHtml(product.description)}</p><div class="stock ${product.stock <= 0 ? "out" : ""}">${product.stock <= 0 ? "Out of Stock" : `In Stock: ${product.stock}`}</div><div class="in-cart" data-in-cart>${inCart ? `In Cart: ${inCart}` : "Not in cart"}</div><div class="product-bottom"><strong>${money(product.price)}</strong>
       <button class="icon-button add-cart" data-id="${product.id}" aria-label="เพิ่ม ${escapeHtml(product.name)} ลงตะกร้า" ${maxed ? "disabled" : ""}>＋</button></div><div class="card-feedback" aria-live="polite">${product.stock > 0 && inCart >= product.stock ? "Stock limit reached" : ""}</div></div>
     </article>`;
@@ -38,7 +39,6 @@
   function applyTheme() {
     ["css/flow.css","css/interactions.css","css/pet-experience.css"].forEach((href) => { if (!document.querySelector(`link[href="${href}"]`)) { const styles = document.createElement("link"); styles.rel = "stylesheet"; styles.href = href; document.head.append(styles); } });
     document.documentElement.dataset.pet = store.getMode();
-    document.body.classList.remove("horror");
     document.querySelectorAll("[data-theme-toggle]").forEach((button) => button.remove());
     document.querySelectorAll('a[href="admin.html"]').forEach((link) => { link.hidden = true; });
     document.querySelectorAll(".footer-inner > span").forEach((text) => { if (text.textContent.includes("2026")) text.textContent = "Pussy & Puppy © 2026"; });
@@ -110,7 +110,7 @@
       const id = Number(button.dataset.id); const card = button.closest(".product-card");
       if (store.addToCart(id)) {
         updateCartCount(); updateProductCartState(id); toast("Added to cart!"); sound("cart");
-        if (card) { card.classList.remove("cart-pop"); void card.offsetWidth; card.classList.add("cart-pop"); const feedback = card.querySelector(".card-feedback"); if (feedback) { feedback.textContent = "Added to cart!"; setTimeout(() => { const product = store.getProducts().find((item) => item.id === id); const qty = store.getCart().find((item) => item.id === id)?.qty || 0; feedback.textContent = product && qty >= product.stock ? "Stock limit reached" : ""; }, 1400); } }
+        if (card) { card.classList.remove("cart-pop"); void card.offsetWidth; card.classList.add("cart-pop"); const clearPop = () => card.classList.remove("cart-pop"); card.addEventListener("animationend", clearPop, { once:true }); setTimeout(clearPop, 500); const feedback = card.querySelector(".card-feedback"); if (feedback) { feedback.textContent = "Added to cart!"; setTimeout(() => { const product = store.getProducts().find((item) => item.id === id); const qty = store.getCart().find((item) => item.id === id)?.qty || 0; feedback.textContent = product && qty >= product.stock ? "Stock limit reached" : ""; }, 1400); } }
       } else { toast("Stock limit reached"); }
     });
     window.addEventListener("pap-cart-change", () => { updateCartCount(); updateProductCartState(); });

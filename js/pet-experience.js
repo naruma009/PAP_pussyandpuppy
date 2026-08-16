@@ -24,6 +24,8 @@ class MascotController {
     this.perchRatio = index ? .72 : .25;
     this.perchSteps = 0;
     this.peers = [];
+    this.chatSnapshot = null;
+    this.destroyed = false;
     stage.append(this.visual.root);
     this.draw();
   }
@@ -178,17 +180,32 @@ class MascotController {
     this.draw();
   }
 
-  react() {
-    const wasPerched = Boolean(this.targetCard && this.cardRect());
+  pauseForResponse() {
+    if (this.destroyed) return;
+    this.chatSnapshot = { state:this.model.state, targetCard:this.targetCard };
     this.paused = true;
     clearTimeout(this.timer);
+    this.model.duration = 0;
+    this.draw();
+  }
+
+  reactAndResume() {
+    if (this.destroyed) return;
     this.model.state = Math.random() < .7 ? "happy" : "curious";
     this.model.duration = 180;
     this.draw();
-    this.timer = window.setTimeout(() => { this.paused = false; wasPerched && this.targetCard ? this.perch() : this.rest(); }, 1300);
+    this.timer = window.setTimeout(() => {
+      if (this.destroyed) return;
+      const snapshot = this.chatSnapshot;
+      this.chatSnapshot = null;
+      this.paused = false;
+      if (snapshot?.targetCard && snapshot.targetCard.isConnected) { this.targetCard = snapshot.targetCard; this.perch(); }
+      else if (["idle", "sit", "sleep", "curious"].includes(snapshot?.state)) { this.model.state = snapshot.state; this.model.duration = 180; this.draw(); this.schedule(wait(900, 1400)); }
+      else this.walk();
+    }, 1300);
   }
 
-  destroy() { clearTimeout(this.timer); this.visual.root.remove(); }
+  destroy() { this.destroyed = true; clearTimeout(this.timer); this.visual.root.remove(); }
 }
 
 function createChat(mode, controllers) {
@@ -203,6 +220,8 @@ function createChat(mode, controllers) {
   const input = shell.querySelector("input");
   const messages = shell.querySelector(".pap-chat-messages");
   let pending = false;
+  let responseTimer = 0;
+  let destroyed = false;
 
   const setOpen = (open) => { panel.hidden = !open; launcher.setAttribute("aria-expanded", String(open)); if (open) input.focus(); };
   const addMessage = (side, text, kind = "") => {
@@ -215,9 +234,9 @@ function createChat(mode, controllers) {
     return message;
   };
 
-  launcher.addEventListener("click", () => setOpen(panel.hidden));
-  close.addEventListener("click", () => setOpen(false));
-  form.addEventListener("submit", (event) => {
+  const onLaunch = () => setOpen(panel.hidden);
+  const onClose = () => setOpen(false);
+  const onSubmit = (event) => {
     event.preventDefault();
     const text = input.value.trim();
     if (!text || pending) return;
@@ -225,19 +244,29 @@ function createChat(mode, controllers) {
     input.value = "";
     pending = true;
     input.disabled = true;
-    const typing = addMessage("pet", "...");
     const kind = chatResponderForMode(mode);
-    window.setTimeout(() => {
+    const responder = controllers.find((controller) => controller.kind === kind);
+    responder?.pauseForResponse();
+    const typing = addMessage("pet", "", kind);
+    typing.classList.add("pap-chat-message--typing");
+    typing.innerHTML = `<span class="pap-chat-avatar" aria-hidden="true">${kind === "cat" ? "🐱" : "🐶"}</span><span class="pap-typing-dots" aria-label="กำลังพิมพ์"><i></i><i></i><i></i></span>`;
+    responseTimer = window.setTimeout(() => {
+      if (destroyed) return;
       const response = randomItem(kind === "cat" ? CAT_REPLIES : DOG_REPLIES);
-      typing.dataset.kind = kind;
-      typing.textContent = `${kind === "cat" ? "🐱" : "🐶"} ${response}`;
-      controllers.find((controller) => controller.kind === kind)?.react();
+      typing.classList.remove("pap-chat-message--typing");
+      typing.classList.add("pap-chat-message--reply");
+      typing.innerHTML = `<span class="pap-chat-avatar" aria-hidden="true">${kind === "cat" ? "🐱" : "🐶"}</span><span></span>`;
+      typing.lastElementChild.textContent = response;
+      responder?.reactAndResume();
       pending = false;
       input.disabled = false;
       input.focus();
     }, wait(300, 601));
-  });
-  return shell;
+  };
+  launcher.addEventListener("click", onLaunch);
+  close.addEventListener("click", onClose);
+  form.addEventListener("submit", onSubmit);
+  return { shell, destroy() { destroyed = true; clearTimeout(responseTimer); launcher.removeEventListener("click", onLaunch); close.removeEventListener("click", onClose); form.removeEventListener("submit", onSubmit); shell.remove(); } };
 }
 
 export function initPetExperience({ mode }) {
@@ -266,12 +295,28 @@ export function initPetExperience({ mode }) {
     scrollFrame = requestAnimationFrame(() => { scrollFrame = 0; controllers.forEach((controller) => controller.syncWithTarget()); });
   };
   addEventListener("scroll", onScroll, { passive:true });
-  const horrorObserver = new MutationObserver(() => {
+  const syncHorrorVisibility = () => {
     const hidden = document.body.classList.contains("horror");
     stage.hidden = hidden;
-    chat.hidden = hidden;
-  });
+    chat.shell.hidden = hidden;
+  };
+  const horrorObserver = new MutationObserver(syncHorrorVisibility);
+  syncHorrorVisibility();
   horrorObserver.observe(document.body, { attributes:true, attributeFilter:["class"] });
-  addEventListener("pagehide", () => { removeEventListener("pointermove", onPointerMove); removeEventListener("scroll", onScroll); if (pointerFrame) cancelAnimationFrame(pointerFrame); if (scrollFrame) cancelAnimationFrame(scrollFrame); horrorObserver.disconnect(); controllers.forEach((controller) => controller.destroy()); }, { once:true });
-  return { controllers, chat };
+  let destroyed = false;
+  const destroy = () => {
+    if (destroyed) return;
+    destroyed = true;
+    removeEventListener("pointermove", onPointerMove);
+    removeEventListener("scroll", onScroll);
+    removeEventListener("pagehide", destroy);
+    if (pointerFrame) cancelAnimationFrame(pointerFrame);
+    if (scrollFrame) cancelAnimationFrame(scrollFrame);
+    horrorObserver.disconnect();
+    chat.destroy();
+    controllers.forEach((controller) => controller.destroy());
+    stage.remove();
+  };
+  addEventListener("pagehide", destroy, { once:true });
+  return { controllers, chat:chat.shell, destroy };
 }
