@@ -7,7 +7,6 @@
 .pap-action-bubble--cat{border-left:3px solid #b55bd9}.pap-action-bubble--dog{border-left:3px solid #ed8b32}
 .pap-mascot[data-state="excited"] .pap-mascot__face{animation:pap-excited .3s ease-in-out infinite alternate}
 .pap-mascot[data-state="relaxed"] .pap-mascot__face{animation:pap-relaxed .8s ease-in-out infinite alternate}
-.pap-mood-launcher{position:fixed;right:18px;bottom:78px;z-index:125;padding:8px 12px;border:1px solid color-mix(in srgb,var(--primary),transparent 75%);border-radius:999px;background:rgba(255,255,255,.92);color:var(--primary);font-size:.75rem;font-weight:800;box-shadow:0 7px 20px rgba(41,33,58,.12);cursor:pointer}
 .pap-chaos-trigger{position:fixed;left:10px;bottom:10px;z-index:124;width:24px;height:24px;padding:0;border:0;border-radius:50%;background:rgba(41,33,58,.08);color:rgba(41,33,58,.35);font-size:.65rem;cursor:pointer;opacity:.38;transition:opacity .2s,transform .2s}
 .pap-chaos-trigger:hover,.pap-chaos-trigger:focus-visible{opacity:.8;transform:rotate(20deg)}
 .pap-mood-overlay{position:fixed;inset:0;z-index:180;display:grid;place-items:center;padding:16px;background:rgba(28,20,35,.46);backdrop-filter:blur(6px)}
@@ -26,5 +25,5 @@
 @keyframes pap-relaxed{to{translate:0 3px;scale:.96}}
 @keyframes pap-chaos-run{to{translate:12vw -18vh;rotate:var(--chaos-turn);scale:1.15}}
 @keyframes pap-chaos-fade{0%,100%{opacity:0}20%,75%{opacity:.7}}
-@media(max-width:700px){.pap-mood-launcher{right:66px;bottom:13px;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.pap-action-menu{transform:scale(.92);transform-origin:left bottom}.pap-mood-card{padding:22px}.pap-chaos-trigger{width:22px;height:22px}}
+@media(max-width:700px){.pap-action-menu{transform:scale(.92);transform-origin:left bottom}.pap-mood-card{padding:22px}.pap-chaos-trigger{width:22px;height:22px}}
 @media(prefers-reduced-motion:reduce){.pap-action-bubble,.pap-mascot[data-state="excited"] .pap-mascot__face,.pap-mascot[data-state="relaxed"] .pap-mascot__face,.pap-chaos span{animation:none!important}.pap-action-menu button,.pap-mood-options button,.pap-mood-products a,.pap-chaos-trigger{transition:none!important}}
