@@ -11,7 +11,7 @@ export default function CartPage() {
   const { cart, cartReady, total, changeQuantity, removeFromCart, announce, customer, customerStatus, retrySession } = useCommerce();
   const { language, t } = usePreferences();
   const navigate = useNavigate();
-  useEffect(() => { document.title = `${t("cart")} — PAP`; }, [t, language]);
+  useEffect(() => { document.title = `${t("cart")} — pal2paw`; }, [t, language]);
   const checkout = () => {
     if (!cart.length || customerStatus !== "ready") return;
     if (!customer) { sessionStorage.setItem("pap-after-login", "checkout.html"); navigate("/login"); }

@@ -5,6 +5,6 @@ import AdminOrders from "../components/admin/AdminOrders";
 
 export default function AdminPage() {
   const { language, t } = usePreferences();
-  useEffect(() => { document.title = `${t("adminDashboard")} — PAP`; }, [language, t]);
+  useEffect(() => { document.title = `${t("adminDashboard")} — pal2paw`; }, [language, t]);
   return <><AdminProducts /><AdminOrders /></>;
 }

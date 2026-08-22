@@ -79,12 +79,12 @@ it("hydrates product detail by legacy ID alias", async () => {
   const router = renderRoute("/product.html?id=3");
   expect(await screen.findByRole("heading", { name: "Shared Toy" })).toBeInTheDocument();
   expect(router.state.location.pathname).toBe("/products/3");
-  expect(document.title).toBe("Shared Toy — PAP");
+  expect(document.title).toBe("Shared Toy — pal2paw");
   expect(localStorage.getItem("pap-cart")).toBe("[]");
   await router.navigate("/products/999");
-  await waitFor(() => expect(document.title).toBe("ไม่พบสินค้านี้ — PAP"));
+  await waitFor(() => expect(document.title).toBe("ไม่พบสินค้านี้ — pal2paw"));
   await router.navigate("/home");
-  await waitFor(() => expect(document.title).toBe("PAP — Pussy and Puppy"));
+  await waitFor(() => expect(document.title).toBe("pal2paw"));
 });
 
 it("does not overwrite a saved price range with pre-hydration zero bounds", async () => {

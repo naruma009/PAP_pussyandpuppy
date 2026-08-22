@@ -4,7 +4,7 @@ import { usePreferences } from "../features/preferences/PreferenceProvider";
 
 export default function NotFoundPage() {
   const { t } = usePreferences();
-  useEffect(() => { document.title = `404 — PAP`; }, []);
+  useEffect(() => { document.title = `404 — pal2paw`; }, []);
   return (
     <main className="foundation-placeholder container">
       <h1>404</h1>

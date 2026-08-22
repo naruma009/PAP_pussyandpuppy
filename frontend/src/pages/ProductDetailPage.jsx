@@ -13,7 +13,7 @@ export default function ProductDetailPage() {
   const { language, t } = usePreferences();
   const product = products.find((item) => Number(item.id) === Number(productId));
   useEffect(() => {
-    document.title = product ? `${product.name} — PAP` : status === "success" ? `${t("productMissing")} — PAP` : `${t("products")} — PAP`;
+    document.title = product ? `${product.name} — pal2paw` : status === "success" ? `${t("productMissing")} — pal2paw` : `${t("products")} — pal2paw`;
   }, [product, status, t, language]);
   if (status === "loading") return <section className="detail container"><CatalogLoading detail /></section>;
   if (status === "error") return <section className="detail container"><CatalogError onRetry={retry} /></section>;

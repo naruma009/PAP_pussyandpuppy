@@ -16,7 +16,7 @@ export default function LoginPage() {
   const [status, setStatus] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
-  useEffect(() => { document.title = `${t("login")} — PAP`; }, [t, language]);
+  useEffect(() => { document.title = `${t("login")} — pal2paw`; }, [t, language]);
   useEffect(() => { setStatus(customer ? t("helloDemo", { name: customer.name }) : ""); }, [customer, t]);
   const submit = async (event) => {
     event.preventDefault(); setSubmitting(true); setStatus("");

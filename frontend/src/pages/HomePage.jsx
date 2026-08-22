@@ -11,7 +11,7 @@ export default function HomePage() {
   const { products, status, retry } = useCatalog();
   const { petMode, t } = usePreferences();
   const [expanded, setExpanded] = useState(false);
-  useEffect(() => { document.title = "PAP — Pussy and Puppy"; }, []);
+  useEffect(() => { document.title = "pal2paw"; }, []);
   const featured = eligibleProducts(products, petMode, true);
   const visible = expanded ? featured : featured.slice(0, 4);
   const toggle = () => { setExpanded((value) => !value); document.querySelector("#featured-products")?.scrollIntoView({ behavior: "smooth", block: "start" }); };

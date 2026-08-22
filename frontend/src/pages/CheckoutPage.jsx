@@ -23,7 +23,7 @@ export default function CheckoutPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const customerHydrated = useRef(false);
-  useEffect(() => { document.title = `${t("checkout")} — PAP`; }, [language, t]);
+  useEffect(() => { document.title = `${t("checkout")} — pal2paw`; }, [language, t]);
   useEffect(() => {
     if (!customer || customerHydrated.current) return;
     customerHydrated.current = true;

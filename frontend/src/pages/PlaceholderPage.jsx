@@ -3,7 +3,7 @@ import { usePreferences } from "../features/preferences/PreferenceProvider";
 
 export default function PlaceholderPage({ page }) {
   const { t } = usePreferences();
-  useEffect(() => { document.title = `${page} — PAP`; }, [page]);
+  useEffect(() => { document.title = `${page} — pal2paw`; }, [page]);
   return (
     <section className="foundation-placeholder container" aria-label={`${page} placeholder`}>
       <p className="eyebrow">M3A Foundation</p>

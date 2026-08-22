@@ -16,5 +16,5 @@ export default function AdminAppShell({ children }) {
     catch (nextError) { setError(nextError.message); }
     finally { setSubmitting(false); }
   };
-  return <div className="admin-app"><header className="site-header"><nav className="nav container" aria-label={t("adminNavigation")}><NavLink className="logo" to="/home"><span className="logo-mark">P</span>PAP Admin</NavLink><div className="admin-nav-actions"><PreferenceControls /><button className="ghost-button" type="button" disabled={submitting} onClick={leave}>{t(submitting ? "loggingOutAdmin" : "logoutAdmin")}</button></div></nav></header><main id="main">{children}</main>{error && <p className="admin-shell-error" role="alert">{error}</p>}</div>;
+  return <div className="admin-app"><header className="site-header"><nav className="nav container" aria-label={t("adminNavigation")}><NavLink className="logo" to="/home"><span className="logo-mark">P</span>pal2paw Admin</NavLink><div className="admin-nav-actions"><PreferenceControls /><button className="ghost-button" type="button" disabled={submitting} onClick={leave}>{t(submitting ? "loggingOutAdmin" : "logoutAdmin")}</button></div></nav></header><main id="main">{children}</main>{error && <p className="admin-shell-error" role="alert">{error}</p>}</div>;
 }

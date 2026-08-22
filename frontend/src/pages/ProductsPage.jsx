@@ -37,7 +37,7 @@ export default function ProductsPage() {
   useEffect(() => {
     if (status === "success" && !resetRequested && filters) sessionStorage.setItem(key, JSON.stringify(filters));
   }, [filters, key, status, resetRequested]);
-  useEffect(() => { document.title = `${t("products")} — PAP`; }, [t, language]);
+  useEffect(() => { document.title = `${t("products")} — pal2paw`; }, [t, language]);
   const setFilters = (next) => setFilterState((current) => {
     const values = next === null ? initialFilters({}, petMode, bounds) : typeof next === "function" ? next(current.values) : next;
     return { token: contextToken, values };

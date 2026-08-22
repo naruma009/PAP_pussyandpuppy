@@ -60,6 +60,20 @@ Object.assign(messages.en, {
   ...Object.fromEntries(["Food", "Treats", "Toys", "Beds", "Grooming", "Clothing", "Accessories", "Health & Care", "Other", "Cat Litter", "Litter Box", "Cat Toilet"].map((category) => [`category.${category}`, category])),
 });
 
+// M1: keep the existing preference keys while presenting the current brand.
+Object.assign(messages.th, {
+  bannerTitle: "รับข่าวดีจากแก๊ง pal2paw",
+  loginTitle: "เข้าสู่แก๊ง pal2paw",
+  manageProductsIntro: "เพิ่ม แก้ไข และดูแลสต็อกสินค้าของ pal2paw",
+  personalityChatAsk: "ถามน้อง PAP",
+});
+Object.assign(messages.en, {
+  bannerTitle: "Good news from the pal2paw pack",
+  loginTitle: "Join the pal2paw pack",
+  manageProductsIntro: "Add, edit, and maintain pal2paw product stock.",
+  personalityChatAsk: "Ask PAP Pet",
+});
+
 Object.assign(messages.th, {
   manageProducts: "จัดการสินค้า", manageProductsIntro: "เพิ่ม แก้ไข และดูแลสต็อกสินค้าของ PAP", productInformation: "ข้อมูลสินค้า", productImage: "รูปสินค้า", imageHelp: "PNG, JPEG หรือ WebP ไม่เกิน 1.5 MB", productName: "ชื่อสินค้า", productDescription: "รายละเอียดสินค้า", productPrice: "ราคา (บาท)", stockQuantity: "จำนวนสต็อก", category: "หมวดหมู่", featuredProduct: "สินค้าแนะนำ",
   livePreview: "ตัวอย่างสินค้า", previewProductName: "ชื่อสินค้า", previewProductDescription: "รายละเอียดสินค้าจะแสดงที่นี่", adminStockCount: "สต็อก: {count} ชิ้น", "adminPet.cat": "สำหรับแมว", "adminPet.dog": "สำหรับหมา", "adminPet.both": "สำหรับแมวและหมา", "adminAge.all": "ทุกช่วงวัย", "adminAge.young": "ลูกสุนัข / ลูกแมว", "adminAge.adult": "โตเต็มวัย", "adminAge.senior": "สูงวัย",

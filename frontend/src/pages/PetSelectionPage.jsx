@@ -17,7 +17,7 @@ export default function PetSelectionPage() {
   const [chosen, setChosen] = useState("");
   const [horror, setHorror] = useState(false);
   const reducedMotion = typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
-  useEffect(() => { document.title = "PAP — Pussy and Puppy"; }, []);
+  useEffect(() => { document.title = "pal2paw"; }, []);
   useEffect(() => () => clearTimeout(timerRef.current), []);
   const selectMode = (mode) => {
     if (timerRef.current || horror) return;
@@ -38,7 +38,7 @@ export default function PetSelectionPage() {
       <button className="secret-button" type="button" aria-label="Secret mode" onClick={enterHorror}>X</button>
       <PreferenceControls compact />
       <main className="landing">
-        <div className="brand"><span>P</span>PAP — Pussy and Puppy</div>
+        <div className="brand"><span>P</span>pal2paw</div>
         <h1>{t("landingTitle")}</h1>
         <p className="landing-intro">{t("landingIntro")}</p>
         <div className="pet-choices">

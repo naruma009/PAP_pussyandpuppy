@@ -44,7 +44,7 @@ it("opens the hidden gate on five timely logo clicks, handles errors and Escape 
   localStorage.setItem("pap-mode", "cat");
   const fetchMock = fetchForAdmin(false);
   const router = mount("/home", fetchMock);
-  const logo = (await screen.findAllByRole("link", { name: "PPAP" }))[0];
+  const logo = (await screen.findAllByRole("link", { name: "Ppal2paw" }))[0];
   for (let index = 0; index < 4; index += 1) await user.click(logo);
   expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   vi.advanceTimersByTime(1401);
@@ -76,7 +76,7 @@ it("keeps the admin dialog open and reports a login error", async () => {
     throw new Error(`Unexpected API call: ${endpoint} ${options.method || "GET"}`);
   });
   mount("/home", fetchMock);
-  const logo = (await screen.findAllByRole("link", { name: "PPAP" }))[0];
+  const logo = (await screen.findAllByRole("link", { name: "Ppal2paw" }))[0];
   for (let index = 0; index < 5; index += 1) await user.click(logo);
   const input = screen.getByLabelText("รหัสผ่านผู้ดูแล");
   await user.type(input, "wrong");
@@ -92,7 +92,7 @@ it("logs in to the translated dark admin shell and logs out without clearing bro
   localStorage.setItem("pap-cart", '[{"id":1,"qty":1}]'); localStorage.setItem("pap-favorites-v1", "[1]");
   const fetchMock = fetchForAdmin(false);
   const router = mount("/home", fetchMock);
-  const logo = (await screen.findAllByRole("link", { name: "PPAP" }))[0];
+  const logo = (await screen.findAllByRole("link", { name: "Ppal2paw" }))[0];
   for (let index = 0; index < 5; index += 1) await user.click(logo);
   await user.type(screen.getByLabelText("Access code"), "secret");
   await user.click(screen.getByRole("button", { name: "Continue" }));

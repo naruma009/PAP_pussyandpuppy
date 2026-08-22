@@ -30,7 +30,7 @@ export default function SiteHeader() {
   return (
     <header className="site-header">
       <nav className="nav container" aria-label="Main navigation">
-        <NavLink ref={logoRef} className="logo" to="/home" onClick={countAdminClick}><span className="logo-mark">P</span>PAP</NavLink>
+        <NavLink ref={logoRef} className="logo" to="/home" onClick={countAdminClick}><span className="logo-mark">P</span>pal2paw</NavLink>
         <div className="nav-links">
           <NavLink to="/home">{t("home")}</NavLink>
           <NavLink to="/products">{t("products")}</NavLink>

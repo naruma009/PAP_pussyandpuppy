@@ -15,7 +15,7 @@ function OrdersContent() {
   const [error, setError] = useState(null);
   const [retry, setRetry] = useState(0);
   const requestVersion = useRef(0);
-  useEffect(() => { document.title = `${t("myOrders")} — PAP`; }, [language, t]);
+  useEffect(() => { document.title = `${t("myOrders")} — pal2paw`; }, [language, t]);
   useEffect(() => {
     const version = ++requestVersion.current;
     const controller = new AbortController();
@@ -37,7 +37,7 @@ function OrdersContent() {
   }, [customer.email, expireCustomerSession, navigate, retry]);
   if (status === "loading") return <section className="orders-page container" role="status"><h1>{t("loadingOrders")}</h1></section>;
   if (status === "error") return <section className="orders-page container"><h1>{t("ordersUnavailable")}</h1><p role="alert">{error.message}</p><button className="button" type="button" onClick={() => setRetry((value) => value + 1)}>{t("retry")}</button></section>;
-  return <section className="orders-page container"><div className="section-heading"><div><span className="eyebrow">PAP account</span><h1>{t("myOrders")}</h1></div></div>{orders.length ? <div className="customer-orders">{orders.map((order) => <article className="customer-order" key={order.id}><div><strong>{order.id}</strong><small>{new Intl.DateTimeFormat(language === "th" ? "th-TH" : "en", { dateStyle: "medium" }).format(new Date(order.createdAt))}</small></div><div className="order-items">{order.items.map((item) => <span key={`${order.id}:${item.productId}`}>{item.name} × {item.qty}</span>)}</div><span className="order-status">{order.status}</span><strong>{money(order.total, language)}</strong></article>)}</div> : <div className="empty-state"><h2>{t("noOrders")}</h2></div>}</section>;
+  return <section className="orders-page container"><div className="section-heading"><div><span className="eyebrow">pal2paw account</span><h1>{t("myOrders")}</h1></div></div>{orders.length ? <div className="customer-orders">{orders.map((order) => <article className="customer-order" key={order.id}><div><strong>{order.id}</strong><small>{new Intl.DateTimeFormat(language === "th" ? "th-TH" : "en", { dateStyle: "medium" }).format(new Date(order.createdAt))}</small></div><div className="order-items">{order.items.map((item) => <span key={`${order.id}:${item.productId}`}>{item.name} × {item.qty}</span>)}</div><span className="order-status">{order.status}</span><strong>{money(order.total, language)}</strong></article>)}</div> : <div className="empty-state"><h2>{t("noOrders")}</h2></div>}</section>;
 }
 
 export default function CustomerOrdersPage() {
