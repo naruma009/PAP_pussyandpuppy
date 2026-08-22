@@ -57,6 +57,10 @@ export async function getCustomerOrder(id, signal) {
   return apiRequest(`/customer/orders/${encodeURIComponent(id)}`, { signal, expectedStatus: 200 });
 }
 
+export async function createPaymentCheckoutSession(id, signal) {
+  return apiRequest(`/customer/orders/${encodeURIComponent(id)}/checkout-session`, { method: "POST", signal, expectedStatus: 200 });
+}
+
 export async function getAdminSession(signal) {
   return apiRequest("/admin/session", { signal, expectedStatus: 200 });
 }

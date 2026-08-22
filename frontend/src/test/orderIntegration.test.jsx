@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { RouterProvider, createMemoryRouter } from "react-router-dom";
 import { afterEach, expect, it, vi } from "vitest";
 import AppProviders from "../app/providers";
+import PaymentButton from "../features/commerce/PaymentButton";
 import { routes } from "../router";
 
 const products = [{ id: 1, name: "Cat Dinner", description: "Food", price: 100, stock: 5, category: "Food", petType: "cat", ageGroup: "all", image: null, emoji: "🐱", featured: true, createdAt: "2026-01-01" }];
@@ -259,4 +260,29 @@ it("renders customer order snapshot details and tolerates missing legacy fields"
   expect(detail.closest("article")).toHaveTextContent("฿251");
   expect(screen.getByText("PAP-LEGACY")).toBeInTheDocument();
   expect(screen.getByText("Shipping details unavailable")).toBeInTheDocument();
+});
+
+it("shows payment for unpaid orders, blocks paid orders, and redirects from a created session", async () => {
+  const user = userEvent.setup();
+  localStorage.setItem("pap-language", "en"); localStorage.setItem("pap-mode", "cat");
+  const redirect = vi.fn();
+  const fetchMock = vi.fn(async (url, options = {}) => {
+    const endpoint = String(url);
+    if (endpoint.endsWith("/checkout-session")) return Response.json({ checkoutUrl: "https://checkout.stripe.test/session", sessionId: "cs_test" });
+    throw new Error(`Unexpected API call: ${endpoint} ${options.method || "GET"}`);
+  });
+  vi.stubGlobal("fetch", fetchMock);
+  render(<AppProviders><PaymentButton order={{ id: "PAP-UNPAID", paymentStatus: "unpaid" }} redirect={redirect} /><PaymentButton order={{ id: "PAP-PAID", paymentStatus: "paid" }} redirect={redirect} /></AppProviders>);
+  const pay = screen.getByRole("button", { name: "Pay now" });
+  await user.click(pay);
+  await waitFor(() => expect(redirect).toHaveBeenCalledWith("https://checkout.stripe.test/session"));
+  expect(screen.queryByRole("button", { name: "Pay now" })).not.toBeInTheDocument();
+});
+
+it("renders payment cancel and success pages without trusting redirect parameters", async () => {
+  localStorage.setItem("pap-language", "en"); localStorage.setItem("pap-mode", "cat");
+  const cancelFetch = vi.fn(async (url) => String(url).endsWith("/products") ? Response.json(products) : Response.json({ customer: null }));
+  mount("/payment/cancel", cancelFetch);
+  expect(await screen.findByRole("heading", { name: "Payment cancelled" })).toBeInTheDocument();
+  expect(screen.getByText("Payment was not completed.")).toBeInTheDocument();
 });

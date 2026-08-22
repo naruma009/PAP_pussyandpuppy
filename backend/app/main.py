@@ -13,6 +13,7 @@ from app.api.products import router as products_router
 from app.config import Settings, get_settings
 from app.db import initialize_database
 from app.postgres import create_database_engine, create_session_factory
+from app.payments import StripeCheckoutProvider
 from app.sessions import FlaskSessionMiddleware
 
 
@@ -42,6 +43,7 @@ def create_app(
     application.state.settings = selected
     application.state.db_engine = engine
     application.state.db_session_factory = create_session_factory(engine)
+    application.state.payment_provider = StripeCheckoutProvider(selected.stripe_secret_key)
     application.add_middleware(
         FlaskSessionMiddleware, secret_key=selected.secret_key, secure=selected.is_production
     )

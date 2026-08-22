@@ -18,6 +18,22 @@ class Settings(BaseSettings):
     database_path: Path = BACKEND_DIR / "data" / "pap-dev.db"
     upload_dir: Path = BACKEND_DIR / "data" / "uploads" / "products"
     secret_key: str = "pap-development-secret-change-me"
+    stripe_secret_key: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices("STRIPE_SECRET_KEY", "PAP_API_STRIPE_SECRET_KEY"),
+    )
+    stripe_webhook_secret: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices("STRIPE_WEBHOOK_SECRET", "PAP_API_STRIPE_WEBHOOK_SECRET"),
+    )
+    stripe_success_url: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices("STRIPE_SUCCESS_URL", "PAP_API_STRIPE_SUCCESS_URL"),
+    )
+    stripe_cancel_url: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices("STRIPE_CANCEL_URL", "PAP_API_STRIPE_CANCEL_URL"),
+    )
     max_content_length: int = 20 * 1024 * 1024
 
     model_config = SettingsConfigDict(

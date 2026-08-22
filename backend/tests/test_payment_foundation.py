@@ -1,6 +1,6 @@
 from decimal import Decimal
 
-from app.payments import CheckoutRequest, StripeCheckoutProvider
+from app.payments import CheckoutLineItem, CheckoutRequest, PaymentConfigurationError, StripeCheckoutProvider
 from conftest import customer_login, shipping
 
 
@@ -40,10 +40,17 @@ def test_payment_and_order_status_are_separate(client, seed_product):
 
 
 def test_stripe_provider_boundary_makes_no_live_call():
-    request = CheckoutRequest(order_id="PAP-TEST", amount=Decimal("10.00"), currency="THB")
+    request = CheckoutRequest(
+        order_id="PAP-TEST",
+        amount=Decimal("10.00"),
+        currency="THB",
+        line_items=(CheckoutLineItem("Test", 1000, 1),),
+        success_url="https://shop.test/success",
+        cancel_url="https://shop.test/cancel",
+    )
     try:
         StripeCheckoutProvider().create_checkout_session(request)
-    except NotImplementedError as error:
-        assert "M5B" in str(error)
+    except PaymentConfigurationError as error:
+        assert "not configured" in str(error)
     else:
-        raise AssertionError("M5A must not create a Stripe Checkout Session")
+        raise AssertionError("A missing Stripe key must not create a Checkout Session")

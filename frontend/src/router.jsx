@@ -15,6 +15,8 @@ import AdminPage from "./pages/AdminPage";
 import AdminProvider from "./features/admin/AdminProvider";
 import AdminGuard from "./features/admin/AdminGuard";
 import AdminAppShell from "./components/admin/AdminAppShell";
+import PaymentSuccessPage from "./pages/PaymentSuccessPage";
+import PaymentCancelPage from "./pages/PaymentCancelPage";
 
 function AdminRoute() {
   return <AdminProvider><AdminGuard><AdminAppShell><AdminPage /></AdminAppShell></AdminGuard></AdminProvider>;
@@ -49,6 +51,8 @@ export const routes = [
       { path: "register", element: <RegisterPage /> },
       { path: "checkout", element: <CheckoutPage /> },
       { path: "account/orders", element: <CustomerOrdersPage /> },
+      { path: "payment/success", element: <PaymentSuccessPage /> },
+      { path: "payment/cancel", element: <PaymentCancelPage /> },
       { path: "health", element: <HealthPage /> },
       { path: "home.html", element: <LegacyAlias to="/home" /> },
       { path: "products.html", element: <LegacyAlias to="/products" /> },

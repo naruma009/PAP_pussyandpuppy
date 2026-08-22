@@ -21,3 +21,5 @@
 ## Production requirements
 
 Backend authorization must remain authoritative for every protected operation. Customer password/session foundations and role-based backend admin authorization are implemented, but define password policy evolution, credential rotation, session expiry/revocation, CSRF strategy where applicable, rate limiting, audit logging, and recovery/MFA before release.
+
+Payment initiation is customer-identity scoped server-side. Stripe webhook signatures are verified against the raw request body; browser success/cancel redirects are informational only and cannot mark an order paid.

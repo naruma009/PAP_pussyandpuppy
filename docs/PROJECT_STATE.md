@@ -91,3 +91,10 @@ Do not treat this document as evidence that the application is production-ready.
 - Alembic revision `m5a_payment_foundation` adds canonical payment state with `unpaid`, `pending`, `paid`, `failed`, and `refunded`; new orders default to `unpaid` and `THB`.
 - Payment status is independent from order fulfillment status and is read-only to customers/admins in M5A; no manual mark-paid endpoint exists.
 - A no-network provider boundary is ready for Stripe Checkout in M5B. No Stripe SDK, credentials, Checkout Session, webhook, or external call is present in M5A.
+
+## M5B1 Stripe Checkout integration foundation
+
+- Stripe Python SDK dependency/configuration and a customer-owned Checkout Session endpoint are implemented with backend-owned snapshot line items and THB currency.
+- Signed webhook handling supports completed and async success/failure events, validates metadata/session identity/amount/currency, and is idempotent.
+- React checkout/order history includes guarded payment initiation plus minimal success/cancel pages. Browser redirects are not payment authority.
+- External Stripe test-mode verification, Stripe credentials, and real payment remain NOT DONE.
