@@ -11,6 +11,7 @@ def require_admin(request: Request):
 
 
 def require_customer(request: Request):
-    if not session_data(request).get("customer"):
+    session = session_data(request)
+    if not session.get("customer_user_id") and not session.get("customer"):
         return error_response("Customer login required", 401)
     return None

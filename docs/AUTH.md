@@ -2,11 +2,13 @@
 
 ## Customer
 
-- Current endpoint: `POST /api/customer/login`, accepting a name and email; session is stored server-side through the FastAPI session middleware.
-- Current session endpoints: `GET /api/customer/session`, `POST /api/customer/logout`.
+- Real customer endpoints: `POST /api/customer/register`, `POST /api/customer/login` with email/password, `GET /api/customer/me`, and `POST /api/customer/logout`.
+- Customer accounts use the `users` table and Argon2id password hashes. The password hash is never returned by the API or stored in the session.
+- The session stores only the authenticated user ID in the existing HttpOnly, SameSite=Lax cookie; Secure is enabled for production settings.
+- `GET /api/customer/session` remains available for the current frontend contract, and the legacy name/email demo login remains temporarily compatible until the frontend replacement lands.
 - Customer-protected endpoints include order creation and customer order history.
-- The React login page and customer guard consume this session.
-- No customer register endpoint, password credential flow, persistent customer model, email verification, recovery, or MFA was found. This is demo authentication, not production-ready customer identity.
+- Self-registration accepts customer fields only; role/admin fields are ignored and cannot grant admin access.
+- Frontend Register/Login replacement, email verification, recovery, MFA, CSRF strategy, rate limiting, and account lifecycle controls remain outstanding.
 
 ## Admin
 
@@ -17,4 +19,4 @@
 
 ## Production requirements
 
-Backend authorization must remain authoritative for every protected operation. Before production, define customer accounts and password/session/token policy, admin roles, credential storage, rotation, session expiry/revocation, CSRF strategy where applicable, rate limiting, audit logging, and recovery/MFA requirements. These are not confirmed complete in the repository and are therefore TBD.
+Backend authorization must remain authoritative for every protected operation. Customer password/session foundations are now implemented, but define password policy evolution, credential rotation, session expiry/revocation, CSRF strategy where applicable, rate limiting, audit logging, recovery/MFA, and production admin identity before release. The shared admin-code model remains unchanged and is not production-ready.

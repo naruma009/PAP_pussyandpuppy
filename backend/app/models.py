@@ -32,6 +32,7 @@ users = Table(
     Column("id", AppInteger, primary_key=True),
     Column("email", Text, nullable=False),
     Column("full_name", Text, nullable=False),
+    Column("password_hash", Text, nullable=False),
     Column("created_at", AppTimestamp(), nullable=False),
     Column("updated_at", AppTimestamp(), nullable=False),
     Column("status", Text, nullable=False, server_default="active"),
