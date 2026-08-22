@@ -15,7 +15,7 @@ Migration is substantially implemented for the core storefront/admin flows, but 
 Current React/FastAPI implementation includes:
 
 - React routes for pet selection, home, catalog, product detail, cart, login, checkout, customer orders, health, and admin.
-- FastAPI health, product catalog/detail, customer session/login/logout/orders, checkout/order creation, admin session/login/logout/orders, product CRUD, uploads, and a development-only legacy product migration endpoint.
+- FastAPI health, product catalog/detail, customer session/login/logout/orders, checkout/order creation, admin session/login/logout/orders/status mutation, product CRUD, uploads, and a development-only legacy product migration endpoint.
 - Legacy URL aliases in React for the former `.html` routes.
 - Backend guards for customer-only and admin-only endpoints.
 
@@ -33,7 +33,7 @@ Legacy implementation remains independently present and is not the current targe
 | Customer order history | FastAPI customer-scoped query + React page | Implemented with SQLAlchemy; PostgreSQL smoke-verified |
 | Admin login | React email/password UI + FastAPI role-backed session | Real identity and role-based authorization are canonical; initial admin bootstrapped |
 | Product CRUD and stock | Admin-protected FastAPI endpoints + React admin UI | Implemented in current stack; PostgreSQL smoke-verified |
-| Admin order management | Admin order listing exists | Read/status/update workflow is incomplete; no admin order mutation endpoint found |
+| Admin order management | Admin order listing + status mutation | Lifecycle transitions and cancellation stock restoration are implemented; payment/fulfillment automation remains TBD |
 | Deployable public service | Local Vite proxy and local FastAPI defaults exist | Production deployment/cutover not verified; TBD |
 
 ## Known issues and production blockers
@@ -42,7 +42,7 @@ Legacy implementation remains independently present and is not the current targe
 - Customer authentication uses persistent users and Argon2id password hashes; React Register/Login/Logout, session restoration, checkout guard, and customer order guard are implemented. Verification/recovery/MFA, rate limiting, and account lifecycle controls remain TBD.
 - Admin backend authorization now uses real `users.role` identity lookup with Argon2id email/password login. Shared-code authentication has been removed; frontend admin cutover and initial bootstrap are complete. Audit trail and secret rotation remain incomplete.
 - Checkout has no payment provider or payment state workflow in the inspected code.
-- Admin order management is read-only in the current API/UI; status updates, fulfillment workflow, and auditability are TBD.
+- Admin order management now supports server-side status transitions and transactional cancellation stock restoration; fulfillment automation and auditability remain TBD.
 - Deployment to a persistent public frontend/backend/database is not verified. Exact hosting, HTTPS, domain, backups, observability, and scaling plan are TBD.
 - Existing React/Vite configuration includes a local API proxy and a trycloudflare allowed host; these are development concerns, not proof of production deployment.
 - No production end-to-end test exists; the M2D core PostgreSQL integration smoke test uses temporary data and cleans it up.
@@ -68,3 +68,8 @@ Legacy implementation remains independently present and is not the current targe
 - React admin login/session/CRUD/orders use real identity and role-based authorization. The initial real admin was bootstrapped, and the deprecated shared-code admin path has been removed.
 
 Do not treat this document as evidence that the application is production-ready. Re-verify each TBD item before release.
+
+## M4A order lifecycle status
+
+- Order status is canonicalized to `pending`, `processing`, `shipped`, `completed`, or `cancelled` by Alembic revision `m4a_order_status`.
+- Admin status mutation requires the real admin role, customers receive the updated status in order history, and cancellation restores stock once within the status transaction.

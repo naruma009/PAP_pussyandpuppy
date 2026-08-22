@@ -77,7 +77,7 @@ async def create_order(request: Request, db: Session = Depends(get_db)):
                 id=order_id, user_id=user_id, customer_name=shipping["fullName"], customer_email=shipping["email"],
                 phone=shipping["phone"], address=shipping["address"], district=shipping["district"],
                 province=shipping["province"], postal_code=shipping["postalCode"], total=total,
-                status="New", created_at=created_at,
+                status="pending", created_at=created_at,
             ))
             for product, quantity in validated:
                 subtotal = product["price"] * quantity

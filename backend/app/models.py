@@ -74,9 +74,13 @@ orders = Table(
     Column("province", Text, nullable=False),
     Column("postal_code", Text, nullable=False),
     Column("total", Numeric(12, 2), nullable=False),
-    Column("status", Text, nullable=False, server_default="New"),
+    Column("status", Text, nullable=False, server_default="pending"),
     Column("created_at", AppTimestamp(), nullable=False),
     CheckConstraint("total >= 0", name="ck_orders_total_nonnegative"),
+    CheckConstraint(
+        "status IN ('pending', 'processing', 'shipped', 'completed', 'cancelled')",
+        name="ck_orders_status",
+    ),
 )
 
 order_items = Table(

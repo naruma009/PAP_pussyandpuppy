@@ -53,3 +53,8 @@ The legacy Flask app uses a separate SQLite file at `instance/pap.db` and root `
 - Migrated products, orders, and order items to `pal2paw` with preserved IDs and relationships. Source SQLite remains unchanged.
 - The repeatable migration command rejects unexpected target data, runs inserts in one transaction, and returns a no-op when the target already matches the source.
 - `users` were not migrated; the source contains demo session data rather than account identities.
+
+## M4A order lifecycle status
+
+- Alembic revision `m4a_order_status` canonicalizes existing `New` orders to `pending` and constrains order status to `pending`, `processing`, `shipped`, `completed`, or `cancelled`.
+- Cancellation restores each order item's stock in the same transaction as the status update; repeated cancellation is idempotent.

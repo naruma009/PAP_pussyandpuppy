@@ -10,7 +10,7 @@ The current backend is under `backend/app/`. `main.py` creates the FastAPI app, 
 - Catalog: `GET /api/products`, `GET /api/products/{id}`
 - Customer: register, real email/password login, current-user/session/logout, and `GET /api/customer/orders`; legacy name/email demo login remains temporarily compatible
 - Orders: `POST /api/orders` with customer guard, server-side stock/total validation, and transaction handling
-- Admin: role-aware email/password login/session/logout, `GET /api/admin/orders`, and development-only `/api/admin/migrate`; every protected operation requires an active user with `role=admin`
+- Admin: role-aware email/password login/session/logout, `GET /api/admin/orders`, `PATCH /api/admin/orders/{id}/status`, and development-only `/api/admin/migrate`; every protected operation requires an active user with `role=admin`
 - Product management: admin-protected `POST /api/products`, `PUT /api/products/{id}`, `DELETE /api/products/{id}`
 
 Uploads are handled by FastAPI under the configured non-legacy upload directory. API responses use an `error` field for the tested error contract.
@@ -21,4 +21,4 @@ Root `app.py` is the Flask implementation of the same broad catalog, cart/order,
 
 ## Gaps before production
 
-The FastAPI persistence layer is now ported to SQLAlchemy, and PostgreSQL schema/data plus customer and admin authentication have been verified. Customer and admin passwords use Argon2id hashes and the existing secure session cookie stores only a user reference. Admin authorization uses the `users.role` value looked up server-side, and the interactive getpass-based bootstrap CLI has created the initial admin account. Alembic migrations must be run through the deployment process rather than startup DDL. Production deployment, admin order mutations, payment integration, observability, and operational controls are not confirmed complete.
+The FastAPI persistence layer is now ported to SQLAlchemy, and PostgreSQL schema/data plus customer and admin authentication have been verified. Customer and admin passwords use Argon2id hashes and the existing secure session cookie stores only a user reference. Admin authorization uses the `users.role` value looked up server-side, and the interactive getpass-based bootstrap CLI has created the initial admin account. Order status lifecycle and cancellation stock restoration are now implemented; payment integration, production deployment, observability, and operational controls are not confirmed complete.

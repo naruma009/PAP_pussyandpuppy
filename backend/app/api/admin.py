@@ -10,6 +10,7 @@ from app.api.dependencies import authenticated_user, require_admin
 from app.auth import verify_password
 from app.db import get_db
 from app.models import order_items, orders, products, settings, users
+from app.order_status import ORDER_STATUSES, can_transition
 from app.responses import error_response
 from app.serializers import order_json
 from app.sessions import session_data
@@ -67,6 +68,63 @@ def admin_orders(request: Request, db: Session = Depends(get_db)):
         )
         for order in order_rows
     ]
+
+
+@router.patch("/admin/orders/{order_id}/status")
+async def update_order_status(order_id: str, request: Request, db: Session = Depends(get_db)):
+    if denied := require_admin(request, db):
+        return denied
+    data = await silent_json(request)
+    if set(data) != {"status"} or data.get("status") not in ORDER_STATUSES:
+        return error_response("Invalid order status", 400)
+    requested_status = data["status"]
+    db.rollback()
+    try:
+        with db.begin():
+            order = db.execute(
+                select(orders).where(orders.c.id == order_id).with_for_update()
+            ).mappings().first()
+            if not order:
+                raise LookupError("Order not found")
+            current_status = order["status"]
+            if not can_transition(current_status, requested_status):
+                raise RuntimeError("Invalid order status transition")
+            if current_status == requested_status:
+                pass
+            elif requested_status == "cancelled":
+                items = db.execute(
+                    select(order_items).where(order_items.c.order_id == order_id).with_for_update()
+                ).mappings().all()
+                now = utc_now()
+                for item in items:
+                    if item["product_id"] is None:
+                        raise RuntimeError("Cannot restore stock for cancelled order")
+                    product = db.execute(
+                        select(products).where(products.c.id == item["product_id"]).with_for_update()
+                    ).mappings().first()
+                    if not product:
+                        raise RuntimeError("Cannot restore stock for cancelled order")
+                    db.execute(
+                        update(products)
+                        .where(products.c.id == item["product_id"])
+                        .values(stock=products.c.stock + item["quantity"], updated_at=now)
+                    )
+                db.execute(
+                    update(orders).where(orders.c.id == order_id).values(status=requested_status)
+                )
+            else:
+                db.execute(
+                    update(orders).where(orders.c.id == order_id).values(status=requested_status)
+                )
+    except LookupError as error:
+        db.rollback()
+        return error_response(str(error), 404)
+    except RuntimeError as error:
+        db.rollback()
+        return error_response(str(error), 409)
+    updated = db.execute(select(orders).where(orders.c.id == order_id)).mappings().one()
+    items = db.execute(select(order_items).where(order_items.c.order_id == order_id)).mappings().all()
+    return order_json(updated, items)
 
 
 @router.post("/admin/migrate")
