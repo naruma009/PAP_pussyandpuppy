@@ -225,3 +225,16 @@ it("guards direct orders and preserves the allowlisted return target", async () 
   await waitFor(() => expect(router.state.location.pathname).toBe("/login"));
   expect(sessionStorage.getItem("pap-after-login")).toBe("/account/orders");
 });
+it("renders canonical customer order status without mutation controls", async () => {
+  localStorage.setItem("pap-language", "en"); localStorage.setItem("pap-mode", "cat");
+  const fetchMock = vi.fn(async (url) => {
+    const endpoint = String(url);
+    if (endpoint.endsWith("/products")) return Response.json(products);
+    if (endpoint.endsWith("/customer/session")) return Response.json({ customer });
+    if (endpoint.endsWith("/customer/orders")) return Response.json([{ id: "PAP-STATUS", createdAt: "2026-01-02T00:00:00Z", status: "processing", total: 100, items: [] }]);
+    throw new Error(`Unexpected API call: ${endpoint}`);
+  });
+  mount("/account/orders", fetchMock);
+  expect(await screen.findByText("Processing")).toBeInTheDocument();
+  expect(screen.queryByRole("combobox", { name: /Change status/ })).not.toBeInTheDocument();
+});

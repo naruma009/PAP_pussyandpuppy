@@ -61,6 +61,16 @@ export async function getAdminOrders(signal) {
   return apiRequest("/admin/orders", { signal, expectedStatus: 200 });
 }
 
+export async function updateAdminOrderStatus(id, status, signal) {
+  return apiRequest(`/admin/orders/${encodeURIComponent(id)}/status`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ status }),
+    signal,
+    expectedStatus: 200,
+  });
+}
+
 export async function loginAdmin(credentials, signal) {
   return apiRequest("/admin/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(credentials), signal, expectedStatus: 200 });
 }

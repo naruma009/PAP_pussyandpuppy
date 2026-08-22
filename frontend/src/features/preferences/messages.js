@@ -128,3 +128,9 @@ Object.assign(messages.en, {
   personalityClose: "Close", personalitySend: "Send", personalityTyping: "Typing", personalityChatMessage: "Message to your pet", personalityChatPlaceholder: "Ask your pet anything",
   personalityMoodCta: "What is your pet thinking today?", personalityMoodWho: "Who would you like to analyze today?", personalityCatPet: "🐱 Cat", personalityDogPet: "🐶 Dog", personalityQuestion: "Question", personalityRecommend: "Recommended category:",
 });
+Object.assign(messages.th, {
+  statusPending: "รอดำเนินการ", statusProcessing: "กำลังดำเนินการ", statusShipped: "จัดส่งแล้ว", statusCompleted: "เสร็จสิ้น", statusCancelled: "ยกเลิก", statusUnknown: "ไม่ทราบสถานะ", changeOrderStatus: "เปลี่ยนสถานะ", selectNextStatus: "เลือกสถานะถัดไป", terminalStatus: "สถานะสิ้นสุดแล้ว",
+});
+Object.assign(messages.en, {
+  statusPending: "Pending", statusProcessing: "Processing", statusShipped: "Shipped", statusCompleted: "Completed", statusCancelled: "Cancelled", statusUnknown: "Unknown status", changeOrderStatus: "Change status", selectNextStatus: "Select next status", terminalStatus: "Final status",
+});

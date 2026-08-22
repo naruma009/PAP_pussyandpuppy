@@ -7,7 +7,7 @@ import { routes } from "../router";
 
 const product = { id: 1, name: "Bed", description: "Soft", price: 10, stock: 3, category: "Beds", petType: "both", ageGroup: "all", image: null, emoji: "🐾", featured: false };
 const customer = { name: "Buyer", email: "buyer@example.com" };
-const newest = { id: "PAP-NEW", createdAt: "2026-08-17T10:30:00Z", status: "New", total: 999, customer: { fullName: "Newest Buyer", phone: "0811111111", email: "new@example.com", address: "1 Road", district: "Area", province: "Bangkok", postalCode: "10000" }, items: [{ productId: 1, name: "Bed", qty: 2, price: 10, subtotal: 20 }] };
+const newest = { id: "PAP-NEW", createdAt: "2026-08-17T10:30:00Z", status: "pending", total: 999, customer: { fullName: "Newest Buyer", phone: "0811111111", email: "new@example.com", address: "1 Road", district: "Area", province: "Bangkok", postalCode: "10000" }, items: [{ productId: 1, name: "Bed", qty: 2, price: 10, subtotal: 20 }] };
 const older = { ...newest, id: "PAP-OLD", createdAt: "2026-08-16T10:30:00Z", customer: { ...newest.customer, fullName: "Older Buyer" } };
 
 function mount(fetchMock) {
@@ -39,7 +39,7 @@ it("renders server order sequence, semantic details, authoritative total, Englis
   const articles = screen.getAllByRole("article");
   expect(articles).toHaveLength(2); expect(articles[0]).toHaveTextContent("PAP-NEW"); expect(articles[1]).toHaveTextContent("PAP-OLD");
   expect(articles[0]).toHaveTextContent("Newest Buyer"); expect(articles[0]).toHaveTextContent("0811111111"); expect(articles[0]).toHaveTextContent("new@example.com");
-  expect(articles[0]).toHaveTextContent("1 Road, Area, Bangkok, 10000"); expect(articles[0]).toHaveTextContent("Bed × 2"); expect(articles[0]).toHaveTextContent("฿999"); expect(articles[0]).toHaveTextContent("New");
+  expect(articles[0]).toHaveTextContent("1 Road, Area, Bangkok, 10000"); expect(articles[0]).toHaveTextContent("Bed × 2"); expect(articles[0]).toHaveTextContent("฿999"); expect(articles[0]).toHaveTextContent("Pending");
   expect(articles[0].querySelector("time")).toHaveAttribute("datetime", newest.createdAt); expect(articles[0].querySelector("address")).toBeInTheDocument(); expect(articles[0].querySelector("ul")).toBeInTheDocument();
   expect(document.documentElement).toHaveAttribute("data-theme", "dark");
 });
@@ -50,6 +50,7 @@ it("renders Thai empty state and explicit loading state", async () => {
   const fetchMock = adminFetch(() => new Promise((resolve) => { resolveOrders = resolve; }));
   mount(fetchMock);
   expect(await screen.findByRole("heading", { name: "กำลังโหลดคำสั่งซื้อของลูกค้า" })).toBeInTheDocument();
+  await waitFor(() => expect(resolveOrders).toEqual(expect.any(Function)));
   resolveOrders(Response.json([]));
   expect(await screen.findByText("ยังไม่มีคำสั่งซื้อจากลูกค้า")).toBeInTheDocument();
 });
@@ -110,4 +111,40 @@ it("expires only Admin on orders 401 and preserves customer commerce state", asy
   expect(await screen.findByLabelText("Email")).toBeInTheDocument();
   expect(localStorage.getItem("pap-cart")).toBe('[{"id":1,"qty":1}]'); expect(localStorage.getItem("pap-favorites-v1")).toBe("[1]"); expect(localStorage.getItem("pap-theme")).toBe("dark"); expect(localStorage.getItem("pap-mode")).toBe("dog");
   expect(fetchMock.mock.calls.some(([url]) => String(url).endsWith("/admin/logout"))).toBe(false);
+});
+it("updates valid status from the server and keeps rejected status unchanged", async () => {
+  const user = userEvent.setup();
+  localStorage.setItem("pap-language", "en");
+  let order = { ...newest, status: "pending" };
+  const fetchMock = vi.fn(async (url, options = {}) => {
+    const endpoint = String(url);
+    if (endpoint.endsWith("/products")) return Response.json([product]);
+    if (endpoint.endsWith("/customer/session")) return Response.json({ customer: null });
+    if (endpoint.endsWith("/admin/session")) return Response.json({ authenticated: true });
+    if (endpoint.endsWith("/admin/orders")) return Response.json([order]);
+    if (endpoint.endsWith("/status")) {
+      const requested = JSON.parse(options.body).status;
+      if (requested === "shipped") return Response.json({ error: "Invalid order status transition" }, { status: 409 });
+      order = { ...order, status: requested };
+      return Response.json(order);
+    }
+    throw new Error(`Unexpected API call: ${endpoint}`);
+  });
+  mount(fetchMock);
+  const select = await screen.findByRole("combobox", { name: "Change status PAP-NEW" });
+  await user.selectOptions(select, "processing");
+  expect(await screen.findByText("Processing")).toBeInTheDocument();
+  await user.selectOptions(screen.getByRole("combobox", { name: "Change status PAP-NEW" }), "shipped");
+  expect(await screen.findByRole("alert")).toHaveTextContent("Invalid order status transition");
+  expect(screen.getByText("Processing")).toBeInTheDocument();
+});
+
+it("hides status mutation controls for terminal orders", async () => {
+  localStorage.setItem("pap-language", "en");
+  const terminal = { ...newest, status: "completed" };
+  const fetchMock = adminFetch(() => Response.json([terminal]));
+  mount(fetchMock);
+  expect(await screen.findByText("Completed")).toBeInTheDocument();
+  expect(screen.queryByRole("combobox", { name: /Change status/ })).not.toBeInTheDocument();
+  expect(screen.getByText("Final status")).toBeInTheDocument();
 });

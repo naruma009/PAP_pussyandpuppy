@@ -1,5 +1,5 @@
 import { afterEach, expect, it, vi } from "vitest";
-import { ApiError, apiRequest, createOrder, createProduct, deleteProduct, getAdminOrders, getCustomerOrders, loginAdmin, logoutAdmin, registerCustomer, updateProduct } from "./api";
+import { ApiError, apiRequest, createOrder, createProduct, deleteProduct, getAdminOrders, getCustomerOrders, loginAdmin, logoutAdmin, registerCustomer, updateAdminOrderStatus, updateProduct } from "./api";
 
 afterEach(() => vi.restoreAllMocks());
 
@@ -77,6 +77,14 @@ it.each([201, 202, 204, 205])("rejects wrong admin-orders success status %s with
   const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(null, { status }));
   await expect(getAdminOrders()).rejects.toMatchObject({ status, message: `Request failed (${status})` });
   expect(fetchMock).toHaveBeenCalledOnce();
+});
+
+it("updates an admin order status through the canonical endpoint", async () => {
+  const controller = new AbortController();
+  const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(Response.json({ id: "PAP-1", status: "processing" }, { status: 200 }));
+  await expect(updateAdminOrderStatus("PAP-1", "processing", controller.signal)).resolves.toEqual({ id: "PAP-1", status: "processing" });
+  expect(fetchMock).toHaveBeenCalledWith("/api/admin/orders/PAP-1/status", expect.objectContaining({ method: "PATCH", credentials: "same-origin", signal: controller.signal }));
+  expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({ status: "processing" });
 });
 
 it("uses exact product mutation statuses and leaves multipart content type to the browser", async () => {

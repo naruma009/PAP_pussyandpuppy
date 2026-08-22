@@ -33,7 +33,7 @@ Legacy implementation remains independently present and is not the current targe
 | Customer order history | FastAPI customer-scoped query + React page | Implemented with SQLAlchemy; PostgreSQL smoke-verified |
 | Admin login | React email/password UI + FastAPI role-backed session | Real identity and role-based authorization are canonical; initial admin bootstrapped |
 | Product CRUD and stock | Admin-protected FastAPI endpoints + React admin UI | Implemented in current stack; PostgreSQL smoke-verified |
-| Admin order management | Admin order listing + status mutation | Lifecycle transitions and cancellation stock restoration are implemented; payment/fulfillment automation remains TBD |
+| Admin order management | Admin order listing + status mutation UI | Backend lifecycle and transactional cancellation restore are implemented; React admin controls and customer status display are complete |
 | Deployable public service | Local Vite proxy and local FastAPI defaults exist | Production deployment/cutover not verified; TBD |
 
 ## Known issues and production blockers
@@ -43,6 +43,7 @@ Legacy implementation remains independently present and is not the current targe
 - Admin backend authorization now uses real `users.role` identity lookup with Argon2id email/password login. Shared-code authentication has been removed; frontend admin cutover and initial bootstrap are complete. Audit trail and secret rotation remain incomplete.
 - Checkout has no payment provider or payment state workflow in the inspected code.
 - Admin order management now supports server-side status transitions and transactional cancellation stock restoration; fulfillment automation and auditability remain TBD.
+- React admin order controls and customer order status labels are implemented for the canonical lifecycle; payment/fulfillment automation remains TBD.
 - Deployment to a persistent public frontend/backend/database is not verified. Exact hosting, HTTPS, domain, backups, observability, and scaling plan are TBD.
 - Existing React/Vite configuration includes a local API proxy and a trycloudflare allowed host; these are development concerns, not proof of production deployment.
 - No production end-to-end test exists; the M2D core PostgreSQL integration smoke test uses temporary data and cleans it up.
@@ -73,3 +74,8 @@ Do not treat this document as evidence that the application is production-ready.
 
 - Order status is canonicalized to `pending`, `processing`, `shipped`, `completed`, or `cancelled` by Alembic revision `m4a_order_status`.
 - Admin status mutation requires the real admin role, customers receive the updated status in order history, and cancellation restores stock once within the status transaction.
+
+## M4B order status UI
+
+- React admin order cards display current status, offer only lifecycle-valid next statuses, refresh from the server response, and show errors without optimistic state changes.
+- React customer order history displays translated status labels and never exposes status mutation controls.
