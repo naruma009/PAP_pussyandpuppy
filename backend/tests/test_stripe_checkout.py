@@ -1,7 +1,8 @@
 from decimal import Decimal
+import sys
 
 import app.api.customer as customer_api
-from app.payments import CheckoutSession, PaymentProviderError
+from app.payments import CheckoutSession, PaymentProviderError, StripeCheckoutProvider
 from conftest import customer_login, shipping
 
 
@@ -77,6 +78,15 @@ def test_missing_config_and_provider_failure_do_not_change_order(client, seed_pr
             raise PaymentProviderError("provider failed")
 
     client.app.state.payment_provider = FailingProvider()
+    assert client.post(f"/api/customer/orders/{order['id']}/checkout-session").status_code == 503
+    assert client.get(f"/api/customer/orders/{order['id']}").json()["paymentStatus"] == "unpaid"
+
+
+def test_missing_stripe_sdk_is_reported_without_payment_state_change(client, seed_product, monkeypatch):
+    order = create_order(client, seed_product)
+    configure_payment(client, FakeProvider())
+    client.app.state.payment_provider = StripeCheckoutProvider(secret_key="sk_test_placeholder")
+    monkeypatch.setitem(sys.modules, "stripe", None)
     assert client.post(f"/api/customer/orders/{order['id']}/checkout-session").status_code == 503
     assert client.get(f"/api/customer/orders/{order['id']}").json()["paymentStatus"] == "unpaid"
 
