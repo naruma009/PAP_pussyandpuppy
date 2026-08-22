@@ -12,6 +12,12 @@ def test_database_url_reads_environment_without_logging(monkeypatch):
     assert database_url(settings) == settings.database_url
 
 
+def test_database_url_normalizes_postgres_scheme_without_credentials():
+    settings = Settings(_env_file=None, database_url="postgres://example.invalid/pal2paw")
+
+    assert database_url(settings) == "postgresql+psycopg://example.invalid/pal2paw"
+
+
 def test_foundation_keeps_sqlite_test_compatibility(tmp_path: Path):
     settings = Settings(_env_file=None, database_path=tmp_path / "foundation.db")
     engine = create_database_engine(settings)

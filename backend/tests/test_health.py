@@ -6,6 +6,7 @@ from app.main import create_app
 
 def test_health(tmp_path) -> None:
     settings = Settings(
+        _env_file=None,
         env="test",
         database_path=tmp_path / "health.db",
         upload_dir=tmp_path / "uploads",

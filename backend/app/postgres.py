@@ -17,6 +17,10 @@ class Base(DeclarativeBase):
 def database_url(settings: Settings) -> str:
     """Return the configured URL, with SQLite retained for current local tests."""
     if settings.database_url:
+        if settings.database_url.startswith("postgres://"):
+            return "postgresql+psycopg://" + settings.database_url.removeprefix("postgres://")
+        if settings.database_url.startswith("postgresql://"):
+            return "postgresql+psycopg://" + settings.database_url.removeprefix("postgresql://")
         return settings.database_url
     return f"sqlite:///{Path(settings.database_path).as_posix()}"
 

@@ -21,4 +21,4 @@ Root `app.py` is the Flask implementation of the same broad catalog, cart/order,
 
 ## Gaps before production
 
-The FastAPI persistence layer is now ported to SQLAlchemy, but PostgreSQL 16 application integration and real PostgreSQL tests remain outstanding until M2D. Alembic migrations must be run through the deployment process rather than startup DDL. Customer registration/account identity, production-grade admin identity/roles, admin order mutations, payment integration, deployment configuration, observability, and operational controls are not confirmed complete.
+The FastAPI persistence layer is now ported to SQLAlchemy, and the initial PostgreSQL schema plus core PostgreSQL smoke tests have been verified in M2D. Alembic migrations must be run through the deployment process rather than startup DDL. SQLite/local demo data migration, production deployment, customer registration/account identity, production-grade admin identity/roles, admin order mutations, payment integration, observability, and operational controls are not confirmed complete.

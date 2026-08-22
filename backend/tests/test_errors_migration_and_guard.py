@@ -43,22 +43,23 @@ def test_legacy_migration_endpoint_is_one_shot(client, settings):
 
 def test_guard_rejects_legacy_paths(tmp_path):
     project_root = Path(__file__).resolve().parents[2]
-    legacy = Settings(database_path=project_root / "instance" / "pap.db", upload_dir=tmp_path)
+    legacy = Settings(_env_file=None, database_path=project_root / "instance" / "pap.db", upload_dir=tmp_path)
     with pytest.raises(RuntimeError, match="legacy instance"):
         create_app(legacy)
-    uploads = Settings(database_path=tmp_path / "db.sqlite", upload_dir=project_root / "uploads" / "products")
+    uploads = Settings(_env_file=None, database_path=tmp_path / "db.sqlite", upload_dir=project_root / "uploads" / "products")
     with pytest.raises(RuntimeError, match="legacy uploads"):
         create_app(uploads)
 
 
 def test_production_requires_non_default_credentials(tmp_path):
-    settings = Settings(env="production", database_path=tmp_path / "db.sqlite", upload_dir=tmp_path / "uploads")
+    settings = Settings(_env_file=None, env="production", database_path=tmp_path / "db.sqlite", upload_dir=tmp_path / "uploads")
     with pytest.raises(RuntimeError, match="SECRET_KEY"):
         create_app(settings)
 
 
 def test_production_cookie_is_secure_and_migration_is_disabled(tmp_path):
     settings = Settings(
+        _env_file=None,
         env="production",
         database_path=tmp_path / "db.sqlite",
         upload_dir=tmp_path / "uploads",
