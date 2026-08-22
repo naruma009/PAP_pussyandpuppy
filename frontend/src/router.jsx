@@ -8,6 +8,7 @@ import ProductDetailPage from "./pages/ProductDetailPage";
 import ProductsPage from "./pages/ProductsPage";
 import CartPage from "./pages/CartPage";
 import LoginPage from "./pages/LoginPage";
+import RegisterPage from "./pages/RegisterPage";
 import CheckoutPage from "./pages/CheckoutPage";
 import CustomerOrdersPage from "./pages/CustomerOrdersPage";
 import AdminPage from "./pages/AdminPage";
@@ -45,6 +46,7 @@ export const routes = [
       { path: "products/:productId", element: <ProductDetailPage /> },
       { path: "cart", element: <CartPage /> },
       { path: "login", element: <LoginPage /> },
+      { path: "register", element: <RegisterPage /> },
       { path: "checkout", element: <CheckoutPage /> },
       { path: "account/orders", element: <CustomerOrdersPage /> },
       { path: "health", element: <HealthPage /> },

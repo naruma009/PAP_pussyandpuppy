@@ -37,6 +37,10 @@ export async function loginCustomer(customer, signal) {
   return apiRequest("/customer/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(customer), signal });
 }
 
+export async function registerCustomer(account, signal) {
+  return apiRequest("/customer/register", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(account), signal });
+}
+
 export async function logoutCustomer(signal) {
   return apiRequest("/customer/logout", { method: "POST", signal });
 }

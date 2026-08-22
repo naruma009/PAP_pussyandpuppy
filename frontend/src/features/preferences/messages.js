@@ -60,6 +60,14 @@ Object.assign(messages.en, {
   ...Object.fromEntries(["Food", "Treats", "Toys", "Beds", "Grooming", "Clothing", "Accessories", "Health & Care", "Other", "Cat Litter", "Litter Box", "Cat Toilet"].map((category) => [`category.${category}`, category])),
 });
 
+Object.assign(messages.th, {
+  register: "Register", registerTitle: "Create your pal2paw account", registerIntro: "Save your details for a smoother checkout.", name: "Name", password: "Password", confirmPassword: "Confirm password", signingIn: "Signing in", registering: "Creating account", loginIntro: "Sign in to checkout and view your orders.", noAccount: "New to pal2paw?", hasAccount: "Already have an account?", passwordMismatch: "Passwords do not match.", emailRegistered: "This email is already registered.", invalidCredentials: "Invalid email or password.",
+});
+
+Object.assign(messages.en, {
+  register: "Register", registerTitle: "Create your pal2paw account", registerIntro: "Save your details for a smoother checkout.", name: "Name", password: "Password", confirmPassword: "Confirm password", signingIn: "Signing in", registering: "Creating account", loginIntro: "Sign in to checkout and view your orders.", noAccount: "New to pal2paw?", hasAccount: "Already have an account?", passwordMismatch: "Passwords do not match.", emailRegistered: "This email is already registered.", invalidCredentials: "Invalid email or password.",
+});
+
 // M1: keep the existing preference keys while presenting the current brand.
 Object.assign(messages.th, {
   bannerTitle: "รับข่าวดีจากแก๊ง pal2paw",

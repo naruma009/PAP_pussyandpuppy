@@ -10,7 +10,7 @@ import { createOrder } from "../services/api";
 
 function initialShipping(customer) {
   const saved = readCustomer() || customer || {};
-  return Object.fromEntries(SHIPPING_FIELDS.map((field) => [field, field === "fullName" ? saved.fullName || saved.name || "" : saved[field] || ""]));
+  return Object.fromEntries(SHIPPING_FIELDS.map((field) => [field, field === "fullName" ? customer?.name || saved.fullName || saved.name || "" : field === "email" ? customer?.email || saved.email || "" : saved[field] || ""]));
 }
 
 export default function CheckoutPage() {
@@ -34,7 +34,7 @@ export default function CheckoutPage() {
     event.preventDefault(); setSubmitting(true); setError("");
     let order;
     try {
-      order = await createOrder(buildOrderPayload(commerce.cart, shipping));
+      order = await createOrder(buildOrderPayload(commerce.cart, { ...shipping, email: customer.email }));
     } catch (nextError) {
       setError(nextError.message); refreshProducts(); setSubmitting(false); return;
     }

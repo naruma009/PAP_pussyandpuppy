@@ -6,7 +6,7 @@ The current frontend is under `frontend/`, using React, React Router, Vite, and 
 
 - `/` pet selection; `/home` storefront home
 - `/products` catalog; `/products/:productId` product detail
-- `/cart`, `/login`, `/checkout`, `/account/orders`
+- `/cart`, `/login`, `/register`, `/checkout`, `/account/orders`
 - `/health`
 - `/admin` admin application
 
@@ -16,7 +16,7 @@ Important feature areas include catalog/product discovery, cart and checkout, cu
 
 ## Storefront and admin
 
-Customer storefront coverage exists for catalog, detail, cart, checkout, login/session, and customer orders. The client sends same-origin credentials to the API and submits item quantities/shipping data; server responses remain authoritative for order results.
+Customer storefront coverage exists for catalog, detail, cart, real Register/Login/Logout/session restore, checkout, and customer orders. The client sends same-origin credentials to the API and does not store passwords or tokens in browser storage. Checkout and order history require the authenticated customer session; server responses remain authoritative for order results.
 
 Admin UI coverage exists for login/session, product create/update/delete, stock fields, uploads, and order listing. Order status management is not evidenced by the current API/UI.
 
@@ -26,4 +26,4 @@ Root `*.html`, `css/`, and `js/` are the legacy Vanilla implementation. Do not a
 
 ## Production gaps
 
-Production serving/build output, API origin configuration, HTTPS/cookie behavior, error monitoring, accessibility/performance acceptance, and full end-to-end browser verification are not established by repository inspection alone. Mark these TBD until tested in the deployment environment.
+Production serving/build output, API origin configuration, HTTPS/cookie behavior, error monitoring, accessibility/performance acceptance, and full end-to-end browser verification are not established by repository inspection alone. Admin identity/role migration also remains TBD.

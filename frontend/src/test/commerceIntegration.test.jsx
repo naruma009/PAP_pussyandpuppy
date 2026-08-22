@@ -13,7 +13,7 @@ function renderCommerce(path, initialCustomer = null) {
     const endpoint = String(url);
     if (endpoint.endsWith("/products")) return Response.json(products);
     if (endpoint.endsWith("/customer/session")) return Response.json({ customer });
-    if (endpoint.endsWith("/customer/login")) { const body = JSON.parse(options.body); customer = { name: body.name.trim(), email: body.email.trim() }; return Response.json({ customer }); }
+    if (endpoint.endsWith("/customer/login")) { const body = JSON.parse(options.body); customer = { name: "Mali", email: body.email.trim() }; return Response.json({ user: customer }); }
     if (endpoint.endsWith("/customer/logout")) { customer = null; return new Response(null, { status: 204 }); }
     throw new Error(`Unexpected M3C API call: ${endpoint}`);
   });
@@ -72,9 +72,9 @@ it("maps pap-after-login checkout.html through login to the guarded checkout pla
   await user.click(await screen.findByRole("button", { name: "ชำระเงิน" }));
   await waitFor(() => expect(router.state.location.pathname).toBe("/login"));
   expect(sessionStorage.getItem("pap-after-login")).toBe("checkout.html");
-  await user.type(screen.getByLabelText("ชื่อเล่น"), " Mali ");
   await user.type(screen.getByLabelText("อีเมล"), "mali@example.com");
-  await user.click(screen.getByRole("button", { name: "เข้าสู่ระบบแบบ Demo" }));
+  await user.type(screen.getByLabelText("Password"), "password-one");
+  await user.click(screen.getByRole("button", { name: "เข้าสู่ระบบ" }));
   await waitFor(() => expect(router.state.location.pathname).toBe("/checkout"));
   expect(sessionStorage.getItem("pap-after-login")).toBeNull();
   expect(await screen.findByRole("button", { name: "ยืนยันคำสั่งซื้อ" })).toBeInTheDocument();

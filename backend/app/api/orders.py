@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 from app.api.customer import silent_json
 from app.api.dependencies import require_customer
 from app.db import get_db
-from app.models import order_items, orders, products
+from app.models import order_items, orders, products, users
 from app.responses import error_response
 from app.serializers import order_json
 from app.sessions import session_data
@@ -36,8 +36,15 @@ async def create_order(request: Request, db: Session = Depends(get_db)):
         not str(shipping.get(field, "")).strip() for field in required
     ):
         return error_response("Cart and complete shipping address are required", 400)
-    customer = session_data(request)["customer"]
-    if str(shipping["email"]).strip().lower() != str(customer["email"]).lower():
+    session = session_data(request)
+    user_id = session.get("customer_user_id")
+    customer = session.get("customer")
+    if user_id:
+        customer_row = db.execute(select(users).where(users.c.id == user_id, users.c.status == "active")).mappings().first()
+        if not customer_row:
+            return error_response("Customer login required", 401)
+        customer = {"name": customer_row["full_name"], "email": customer_row["email"]}
+    if not customer or str(shipping["email"]).strip().lower() != str(customer["email"]).lower():
         return error_response("Shipping email must match the logged-in customer", 400)
     try:
         if db.bind.dialect.name == "sqlite":
@@ -67,7 +74,7 @@ async def create_order(request: Request, db: Session = Depends(get_db)):
             total = sum(product["price"] * quantity for product, quantity in validated)
             created_at = utc_now()
             db.execute(insert(orders).values(
-                id=order_id, customer_name=shipping["fullName"], customer_email=shipping["email"],
+                id=order_id, user_id=user_id, customer_name=shipping["fullName"], customer_email=shipping["email"],
                 phone=shipping["phone"], address=shipping["address"], district=shipping["district"],
                 province=shipping["province"], postal_code=shipping["postalCode"], total=total,
                 status="New", created_at=created_at,

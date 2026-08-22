@@ -71,6 +71,10 @@ export default function CommerceProvider({ children }) {
     authController.current = controller;
     return { controller, version };
   }, [invalidateSession]);
+  const expireCustomerSession = useCallback(() => {
+    invalidateSession();
+    setCustomer(null); setCustomerStatus("ready"); setSessionError(null);
+  }, [invalidateSession]);
 
   const value = useMemo(() => ({
     cart: cart || [], cartReady: cart !== null, count: cartCount(cart || []), total: cartTotal(cart || [], products),
@@ -93,18 +97,16 @@ export default function CommerceProvider({ children }) {
       setCart([]);
       try { writeCart([]); } catch { /* The confirmed server order remains successful. */ }
     },
-    expireCustomerSession() {
-      invalidateSession();
-      setCustomer(null); setCustomerStatus("ready"); setSessionError(null);
-    },
+    expireCustomerSession,
     async login(credentials) {
       const { controller, version } = beginAuthMutation();
       setCustomerStatus("loading"); setSessionError(null);
       try {
         const result = await loginCustomer(credentials, controller.signal);
         if (version !== sessionVersion.current) return null;
-        setCustomer(result.customer); setCustomerStatus("ready");
-        return result.customer;
+        const nextCustomer = result.user || result.customer;
+        setCustomer(nextCustomer); setCustomerStatus("ready");
+        return nextCustomer;
       } catch (error) {
         if (error.name === "AbortError" || version !== sessionVersion.current) return null;
         if (version === sessionVersion.current) { setSessionError(error); setCustomerStatus("error"); }
@@ -129,7 +131,7 @@ export default function CommerceProvider({ children }) {
         if (authController.current === controller) authController.current = null;
       }
     },
-  }), [cart, products, customer, customerStatus, sessionError, notice, announce, beginAuthMutation, invalidateSession, save]);
+  }), [cart, products, customer, customerStatus, sessionError, notice, announce, beginAuthMutation, expireCustomerSession, save]);
 
   return <CommerceContext.Provider value={value}>{children}</CommerceContext.Provider>;
 }

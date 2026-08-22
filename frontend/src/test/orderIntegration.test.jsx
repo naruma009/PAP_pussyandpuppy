@@ -168,7 +168,7 @@ it("treats an orders 401 as an expired local customer session and redirects to l
   const { router } = mount("/account/orders", fetchMock);
   await waitFor(() => expect(router.state.location.pathname).toBe("/login"));
   expect(sessionStorage.getItem("pap-after-login")).toBe("/account/orders");
-  expect(await screen.findByRole("button", { name: "Demo Login" })).toBeInTheDocument();
+  expect(await screen.findByRole("button", { name: "Login" })).toBeInTheDocument();
   expect(localStorage.getItem("pap-cart")).toBe('[{"id":1,"qty":1}]');
   expect(fetchMock.mock.calls.some(([url]) => String(url).endsWith("/customer/logout"))).toBe(false);
 });
@@ -204,15 +204,15 @@ it("returns to account orders after a successful allowlisted login", async () =>
     const endpoint = String(url);
     if (endpoint.endsWith("/products")) return Response.json(products);
     if (endpoint.endsWith("/customer/session")) return Response.json({ customer: activeCustomer });
-    if (endpoint.endsWith("/customer/login")) { activeCustomer = customer; return Response.json({ customer }); }
+    if (endpoint.endsWith("/customer/login")) { activeCustomer = customer; return Response.json({ user: customer }); }
     if (endpoint.endsWith("/customer/orders")) return Response.json([]);
     throw new Error(`Unexpected API call: ${endpoint}`);
   });
   const { router } = mount("/account/orders", fetchMock);
   await waitFor(() => expect(router.state.location.pathname).toBe("/login"));
-  await user.type(screen.getByLabelText("Nickname"), "Buyer");
   await user.type(screen.getByLabelText("Email"), "buyer@example.com");
-  await user.click(screen.getByRole("button", { name: "Demo Login" }));
+  await user.type(screen.getByLabelText("Password"), "password-one");
+  await user.click(screen.getByRole("button", { name: "Login" }));
   await waitFor(() => expect(router.state.location.pathname).toBe("/account/orders"));
   expect(await screen.findByText("You have no orders yet")).toBeInTheDocument();
   expect(sessionStorage.getItem("pap-after-login")).toBeNull();

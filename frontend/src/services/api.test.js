@@ -1,5 +1,5 @@
 import { afterEach, expect, it, vi } from "vitest";
-import { ApiError, apiRequest, createOrder, createProduct, deleteProduct, getAdminOrders, getCustomerOrders, loginAdmin, logoutAdmin, updateProduct } from "./api";
+import { ApiError, apiRequest, createOrder, createProduct, deleteProduct, getAdminOrders, getCustomerOrders, loginAdmin, logoutAdmin, registerCustomer, updateProduct } from "./api";
 
 afterEach(() => vi.restoreAllMocks());
 
@@ -22,6 +22,13 @@ it("uses the M2 order endpoints without adding client totals", async () => {
   fetchMock.mockResolvedValueOnce(new Response("[]", { status: 200 }));
   await getCustomerOrders(controller.signal);
   expect(fetchMock).toHaveBeenLastCalledWith("/api/customer/orders", expect.objectContaining({ credentials: "same-origin", signal: controller.signal }));
+});
+
+it("posts real customer registration with same-origin credentials", async () => {
+  const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(Response.json({ user: { id: 1 } }, { status: 200 }));
+  await expect(registerCustomer({ name: "New", email: "new@example.com", password: "password-one" })).resolves.toEqual({ user: { id: 1 } });
+  expect(fetchMock).toHaveBeenCalledWith("/api/customer/register", expect.objectContaining({ credentials: "same-origin" }));
+  expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({ name: "New", email: "new@example.com", password: "password-one" });
 });
 
 it("does not treat a non-201 order response as success", async () => {

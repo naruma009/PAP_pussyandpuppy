@@ -27,8 +27,8 @@ Legacy implementation remains independently present and is not the current targe
 | --- | --- | --- |
 | Product catalog/detail | React pages + FastAPI GET product endpoints | Implemented in current stack; PostgreSQL connectivity verified |
 | Cart | React state/local browser storage | Implemented in current stack |
-| Customer login/logout | FastAPI register/login/me/session/logout endpoints | Backend real customer auth implemented; frontend replacement and production account controls TBD |
-| Customer register | FastAPI `/api/customer/register` | Backend implemented; no frontend replacement yet |
+| Customer login/logout | FastAPI register/login/me/session/logout endpoints | Real customer auth is wired into the React UI; production account controls TBD |
+| Customer register | FastAPI `/api/customer/register` | React registration UI implemented; email verification/recovery remain TBD |
 | Checkout/order creation | FastAPI validates session, stock, totals, and writes order | Implemented with SQLAlchemy; PostgreSQL smoke-verified; payment and production deployment TBD |
 | Customer order history | FastAPI customer-scoped query + React page | Implemented with SQLAlchemy; PostgreSQL smoke-verified |
 | Admin login | FastAPI session with configured shared admin code | Functional prototype; production identity/MFA/rotation TBD |
@@ -39,7 +39,7 @@ Legacy implementation remains independently present and is not the current targe
 ## Known issues and production blockers
 
 - PostgreSQL schema initialization and application connectivity are verified for the development `pal2paw` database; data migration and production deployment remain outstanding.
-- Customer authentication backend now uses persistent users and Argon2id password hashes; frontend replacement, verification/recovery/MFA, rate limiting, and account lifecycle controls remain TBD.
+- Customer authentication uses persistent users and Argon2id password hashes; React Register/Login/Logout, session restoration, checkout guard, and customer order guard are implemented. Verification/recovery/MFA, rate limiting, and account lifecycle controls remain TBD.
 - Admin authentication is a single shared configured code stored in a session; a production-grade identity, authorization model, audit trail, and secret rotation are TBD.
 - Checkout has no payment provider or payment state workflow in the inspected code.
 - Admin order management is read-only in the current API/UI; status updates, fulfillment workflow, and auditability are TBD.
@@ -58,6 +58,6 @@ Legacy implementation remains independently present and is not the current targe
 
 - Alembic revision `m3a_customer_auth` added the required `users.password_hash` column without changing the applied initial revision.
 - Register/login/logout/current-user backend flows are implemented and PostgreSQL smoke-verified; test accounts are cleaned up.
-- The existing admin shared-code session remains unchanged. Frontend Register/Login replacement and production admin identity are not complete.
+- The existing admin shared-code session remains unchanged. Frontend customer Register/Login replacement is complete; production admin identity/role migration remains incomplete. Legacy demo customer backend compatibility remains for tests/transition only.
 
 Do not treat this document as evidence that the application is production-ready. Re-verify each TBD item before release.

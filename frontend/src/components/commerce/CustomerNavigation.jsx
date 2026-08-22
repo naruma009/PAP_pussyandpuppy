@@ -12,6 +12,7 @@ export default function CustomerNavigation() {
   const trigger = useRef(null);
   const panelId = useId();
   const navigate = useNavigate();
+  const guestNavigation = customerStatus === "ready" && !customer;
   useEffect(() => {
     if (!open) return undefined;
     const closeOutside = (event) => { if (!root.current?.contains(event.target)) setOpen(false); };
@@ -22,6 +23,7 @@ export default function CustomerNavigation() {
     document.addEventListener("click", closeOutside); document.addEventListener("keydown", closeOnEscape);
     return () => { document.removeEventListener("click", closeOutside); document.removeEventListener("keydown", closeOnEscape); };
   }, [open]);
+  if (guestNavigation) return <div className="customer-guest-nav"><NavLink to="/login">{t("login")}</NavLink><NavLink to="/register">{t("register")}</NavLink></div>;
   if (customerStatus === "loading") return <span className="customer-nav-loading" aria-label={t("checkingSession")} />;
   if (customerStatus === "error" && !customer) return <button className="round-link" type="button" aria-label={t("retrySession")} onClick={retrySession}>↻</button>;
   if (!customer) return <NavLink className="round-link" to="/login" aria-label={t("login")}>☺</NavLink>;

@@ -5,19 +5,18 @@ import { expect, it, vi } from "vitest";
 import LoginPage, { loginDestination } from "./LoginPage";
 
 const login = vi.fn();
-const translate = (key) => ({ login: "Login", loginTitle: "Join", demoLoginNote: "Demo", nickname: "Nickname", nicknameExample: "Name", email: "Email", signingIn: "Signing in", demoLogin: "Demo Login" }[key] || key);
+const translate = (key) => ({ login: "Login", loginTitle: "Sign in", loginIntro: "Sign in", email: "Email", password: "Password", signingIn: "Signing in", invalidCredentials: "Invalid email or password", noAccount: "New?", register: "Register" }[key] || key);
 vi.mock("../features/commerce/CommerceProvider", () => ({ useCommerce: () => ({ customer: null, login }) }));
 vi.mock("../features/preferences/PreferenceProvider", () => ({ usePreferences: () => ({ language: "en", playSound: vi.fn(), t: translate }) }));
 
-it("shows login API errors and preserves pap-after-login", async () => {
-  login.mockRejectedValueOnce(new Error("Name and valid email are required"));
-  sessionStorage.setItem("pap-after-login", "checkout.html");
+it("submits email/password and shows generic login errors", async () => {
+  login.mockRejectedValueOnce(Object.assign(new Error("backend detail"), { status: 401 }));
   render(<MemoryRouter><LoginPage /></MemoryRouter>);
-  await userEvent.type(screen.getByLabelText("Nickname"), "A");
   await userEvent.type(screen.getByLabelText("Email"), "a@example.com");
-  await userEvent.click(screen.getByRole("button", { name: "Demo Login" }));
-  expect(await screen.findByText("Name and valid email are required")).toBeInTheDocument();
-  expect(sessionStorage.getItem("pap-after-login")).toBe("checkout.html");
+  await userEvent.type(screen.getByLabelText("Password"), "wrong-password");
+  await userEvent.click(screen.getByRole("button", { name: "Login" }));
+  expect(await screen.findByText("Invalid email or password")).toBeInTheDocument();
+  expect(login).toHaveBeenCalledWith({ email: "a@example.com", password: "wrong-password" });
 });
 
 it("allowlists checkout and account orders destinations", () => {
