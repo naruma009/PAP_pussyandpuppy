@@ -1,6 +1,7 @@
 from functools import lru_cache
 from pathlib import Path
 
+from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BACKEND_DIR = Path(__file__).resolve().parents[1]
@@ -10,6 +11,10 @@ class Settings(BaseSettings):
     env: str = "development"
     host: str = "127.0.0.1"
     port: int = 8000
+    database_url: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices("DATABASE_URL", "PAP_API_DATABASE_URL"),
+    )
     database_path: Path = BACKEND_DIR / "data" / "pap-dev.db"
     upload_dir: Path = BACKEND_DIR / "data" / "uploads" / "products"
     secret_key: str = "pap-development-secret-change-me"
@@ -20,6 +25,7 @@ class Settings(BaseSettings):
         env_file=".env",
         env_prefix="PAP_API_",
         extra="ignore",
+        populate_by_name=True,
     )
 
     @property

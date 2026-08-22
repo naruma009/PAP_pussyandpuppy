@@ -2,7 +2,7 @@
 
 ## Current state
 
-FastAPI currently uses Python `sqlite3` and `backend/app/schema.sql`. The current schema has `products`, `orders`, `order_items`, and `settings`. It does not establish PostgreSQL integration.
+FastAPI runtime queries still use Python `sqlite3` and `backend/app/schema.sql`. PostgreSQL foundation code now provides SQLAlchemy engine/session setup, environment-only `DATABASE_URL` configuration, and Alembic scaffolding; application query cutover has not started.
 
 The legacy Flask app uses a separate SQLite file at `instance/pap.db` and root `schema.sql`. FastAPI runtime guards reject the legacy database and upload paths.
 
@@ -24,3 +24,11 @@ The legacy Flask app uses a separate SQLite file at `instance/pap.db` and root `
 - The `pal2paw` PostgreSQL database exists and currently has no tables, as confirmed for M2 planning.
 - FastAPI application integration with PostgreSQL has not started.
 - No PostgreSQL SQL, schema creation, migration, or application database change was performed in M2B.
+
+## M2C1 foundation status
+
+- SQLAlchemy 2.x, Alembic, and psycopg 3 dependencies are declared for the backend.
+- `DATABASE_URL` is read from environment/.env configuration without logging or embedding credentials.
+- SQLAlchemy foundation retains SQLite fallback for the existing local test suite.
+- Alembic initial revision `m2c1_initial` defines `users`, `products`, `orders`, `order_items`, and `settings` with constraints and indexes.
+- Application API queries still run through the SQLite layer; PostgreSQL migration has not been run against any server.
