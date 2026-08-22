@@ -18,7 +18,6 @@ class Settings(BaseSettings):
     database_path: Path = BACKEND_DIR / "data" / "pap-dev.db"
     upload_dir: Path = BACKEND_DIR / "data" / "uploads" / "products"
     secret_key: str = "pap-development-secret-change-me"
-    admin_password: str = "PAP2026"
     max_content_length: int = 20 * 1024 * 1024
 
     model_config = SettingsConfigDict(
@@ -42,8 +41,6 @@ class Settings(BaseSettings):
         if self.is_production:
             if not self.secret_key or self.secret_key == "pap-development-secret-change-me":
                 raise RuntimeError("PAP_API_SECRET_KEY is required in production")
-            if not self.admin_password or self.admin_password == "PAP2026":
-                raise RuntimeError("PAP_API_ADMIN_PASSWORD is required in production")
 
 
 @lru_cache

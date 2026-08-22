@@ -73,6 +73,7 @@ def get_product(product_id: str, db: Session = Depends(get_db)):
 async def create_product(request: Request, db: Session = Depends(get_db)):
     if denied := require_admin(request, db):
         return denied
+    db.rollback()
     new_url = ""
     try:
         data, new_url = await product_payload(request)

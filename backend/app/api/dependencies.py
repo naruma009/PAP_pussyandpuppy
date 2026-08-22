@@ -20,9 +20,6 @@ def require_admin(request: Request, db: Session):
     user = authenticated_user(request, db)
     if user and user["role"] == "admin":
         return None
-    # Temporary compatibility for the existing frontend; remove in M3C2.
-    if session_data(request).get("admin_authenticated"):
-        return None
     if not user:
         return error_response("Admin authentication required", 401)
     return error_response("Admin authorization required", 403)

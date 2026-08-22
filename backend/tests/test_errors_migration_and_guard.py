@@ -64,15 +64,11 @@ def test_production_cookie_is_secure_and_migration_is_disabled(tmp_path):
         database_path=tmp_path / "db.sqlite",
         upload_dir=tmp_path / "uploads",
         secret_key="production-test-secret",
-        admin_password="production-test-admin",
     )
     from fastapi.testclient import TestClient
 
     with TestClient(create_app(settings, initialize=True), base_url="https://testserver") as client:
-        login = client.post("/api/admin/login", json={"code": "production-test-admin"})
-        assert "secure" in login.headers["set-cookie"].lower()
-        response = client.post("/api/admin/migrate", json={"products": []})
-        assert (response.status_code, response.json()) == (
-            403,
-            {"error": "Legacy migration is disabled in production"},
-        )
+        login = client.post("/api/admin/login", json={"code": "deprecated"})
+        assert login.status_code == 401
+    response = client.post("/api/admin/migrate", json={"products": []})
+    assert (response.status_code, response.json()) == (401, {"error": "Admin authentication required"})

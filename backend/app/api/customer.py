@@ -84,7 +84,6 @@ async def customer_register(request: Request, db: Session = Depends(get_db)):
 
     user = db.execute(select(users).where(users.c.id == user_id)).mappings().one()
     session = session_data(request)
-    session.pop("admin_authenticated", None)
     session.pop("customer", None)
     session["customer_user_id"] = user_id
     return {"user": safe_user(user)}
@@ -101,7 +100,6 @@ async def customer_login(request: Request, db: Session = Depends(get_db)):
         if not name or not valid_email(email):
             return error_response("Name and valid email are required", 400)
         session = session_data(request)
-        session.pop("admin_authenticated", None)
         session["customer"] = {"name": name, "email": email}
         return {"customer": {"name": name, "email": email}}
 
@@ -111,7 +109,6 @@ async def customer_login(request: Request, db: Session = Depends(get_db)):
     if not valid_email(email) or not isinstance(password, str) or not user or not verify_password(user["password_hash"], password):
         return error_response("Invalid email or password", 401)
     session = session_data(request)
-    session.pop("admin_authenticated", None)
     session.pop("customer", None)
     session["customer_user_id"] = user["id"]
     return {"user": safe_user(user)}

@@ -15,9 +15,9 @@
 - Current endpoints: `POST /api/admin/login`, `GET /api/admin/session`, `POST /api/admin/logout`.
 - Real admin login accepts email/password only for an active `users` row with `role=admin`; the identity session stores the user ID and every admin guard looks up the role server-side.
 - Admin product CRUD, admin orders, and the legacy migration endpoint call the backend admin guard.
-- The shared configured-code admin login remains temporarily available for frontend compatibility, but is deprecated and is not being extended. Frontend admin cutover/removal is planned for M3C2.
-- React admin now uses the real email/password login and role-backed session restore; frontend hiding alone is not the security boundary. The initial real admin account still must be bootstrapped in M3C3.
+- Shared-code admin authentication has been removed. React admin uses the real email/password login and role-backed session restore; frontend hiding alone is not the security boundary.
+- The initial real admin account has been bootstrapped through the interactive management mechanism; credentials are not stored in source or documentation.
 
 ## Production requirements
 
-Backend authorization must remain authoritative for every protected operation. Customer password/session foundations and role-based backend admin authorization are implemented, but define password policy evolution, credential rotation, session expiry/revocation, CSRF strategy where applicable, rate limiting, audit logging, recovery/MFA, and production admin account operations before release. The deprecated shared admin-code model remains temporarily compatible and is not production-ready.
+Backend authorization must remain authoritative for every protected operation. Customer password/session foundations and role-based backend admin authorization are implemented, but define password policy evolution, credential rotation, session expiry/revocation, CSRF strategy where applicable, rate limiting, audit logging, and recovery/MFA before release.

@@ -11,7 +11,6 @@ def test_health(tmp_path) -> None:
         database_path=tmp_path / "health.db",
         upload_dir=tmp_path / "uploads",
         secret_key="test-secret",
-        admin_password="test-admin",
     )
     with TestClient(create_app(settings, initialize=True)) as client:
         response = client.get("/api/health")

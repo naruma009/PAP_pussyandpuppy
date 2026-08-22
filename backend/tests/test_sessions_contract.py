@@ -2,25 +2,26 @@ from flask import Flask
 from flask.sessions import SecureCookieSessionInterface
 
 from app.sessions import FlaskSessionCodec
+from conftest import admin_login
 
 
-def test_customer_and_admin_share_flask_compatible_session(client):
+def test_customer_and_admin_use_identity_session(client):
     assert client.get("/api/customer/session").json() == {"customer": None}
     assert client.post("/api/customer/login", json={"name": " Cat ", "email": "cat@example.com"}).json() == {
         "customer": {"name": "Cat", "email": "cat@example.com"}
     }
-    assert client.post("/api/admin/login", json={"code": "test-admin"}).json() == {"authenticated": True}
-    assert client.get("/api/customer/session").json()["customer"]["email"] == "cat@example.com"
+    assert client.post("/api/admin/login", json={"code": "deprecated"}).status_code == 401
+    admin_login(client)
     assert client.get("/api/admin/session").json() == {"authenticated": True}
     assert client.post("/api/customer/logout").status_code == 204
-    assert client.get("/api/admin/session").json() == {"authenticated": True}
+    assert client.get("/api/admin/session").json() == {"authenticated": False}
     assert client.post("/api/admin/logout").status_code == 204
 
 
 def test_flask_golden_cookie_round_trip():
     secret = "golden-secret"
     payload = {
-        "admin_authenticated": True,
+        "customer_user_id": 7,
         "customer": {"name": "Golden", "email": "golden@example.com"},
     }
     flask_app = Flask(__name__)

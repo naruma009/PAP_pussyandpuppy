@@ -1,4 +1,3 @@
-import hmac
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, Request
@@ -27,33 +26,25 @@ def utc_now() -> str:
 async def admin_login(request: Request, db: Session = Depends(get_db)):
     data = await silent_json(request)
     password = data.get("password")
-    if password is not None:
-        email = str(data.get("email") or "").strip().casefold()
-        user = db.execute(
-            select(users).where(
-                users.c.email.ilike(email),
-                users.c.status == "active",
-                users.c.role == "admin",
-            )
-        ).mappings().first()
-        if not email or not isinstance(password, str) or not user or not verify_password(user["password_hash"], password):
-            return error_response("Invalid email or password", 401)
-        session = session_data(request)
-        session.pop("admin_authenticated", None)
-        session.pop("customer", None)
-        session["customer_user_id"] = user["id"]
-        return {"authenticated": True}
-    supplied = str(data.get("code", ""))
-    if not hmac.compare_digest(supplied, request.app.state.settings.admin_password):
-        return error_response("Invalid code", 401)
-    session_data(request)["admin_authenticated"] = True
+    email = str(data.get("email") or "").strip().casefold()
+    user = db.execute(
+        select(users).where(
+            users.c.email.ilike(email),
+            users.c.status == "active",
+            users.c.role == "admin",
+        )
+    ).mappings().first()
+    if not email or not isinstance(password, str) or not user or not verify_password(user["password_hash"], password):
+        return error_response("Invalid email or password", 401)
+    session = session_data(request)
+    session.pop("customer", None)
+    session["customer_user_id"] = user["id"]
     return {"authenticated": True}
 
 
 @router.post("/admin/logout")
 def admin_logout(request: Request):
     session = session_data(request)
-    session.pop("admin_authenticated", None)
     session.pop("customer_user_id", None)
     return Response(status_code=204)
 
@@ -61,7 +52,7 @@ def admin_logout(request: Request):
 @router.get("/admin/session")
 def admin_session(request: Request, db: Session = Depends(get_db)):
     user = authenticated_user(request, db)
-    return {"authenticated": bool(session_data(request).get("admin_authenticated") or (user and user["role"] == "admin"))}
+    return {"authenticated": bool(user and user["role"] == "admin")}
 
 
 @router.get("/admin/orders")

@@ -31,7 +31,7 @@ Legacy implementation remains independently present and is not the current targe
 | Customer register | FastAPI `/api/customer/register` | React registration UI implemented; email verification/recovery remain TBD |
 | Checkout/order creation | FastAPI validates session, stock, totals, and writes order | Implemented with SQLAlchemy; PostgreSQL smoke-verified; payment and production deployment TBD |
 | Customer order history | FastAPI customer-scoped query + React page | Implemented with SQLAlchemy; PostgreSQL smoke-verified |
-| Admin login | React email/password UI + FastAPI role-backed session | React cutover complete; initial real admin bootstrap is deferred to M3C3 |
+| Admin login | React email/password UI + FastAPI role-backed session | Real identity and role-based authorization are canonical; initial admin bootstrapped |
 | Product CRUD and stock | Admin-protected FastAPI endpoints + React admin UI | Implemented in current stack; PostgreSQL smoke-verified |
 | Admin order management | Admin order listing exists | Read/status/update workflow is incomplete; no admin order mutation endpoint found |
 | Deployable public service | Local Vite proxy and local FastAPI defaults exist | Production deployment/cutover not verified; TBD |
@@ -40,7 +40,7 @@ Legacy implementation remains independently present and is not the current targe
 
 - PostgreSQL schema initialization and application connectivity are verified for the development `pal2paw` database; data migration and production deployment remain outstanding.
 - Customer authentication uses persistent users and Argon2id password hashes; React Register/Login/Logout, session restoration, checkout guard, and customer order guard are implemented. Verification/recovery/MFA, rate limiting, and account lifecycle controls remain TBD.
-- Admin backend authorization now uses real `users.role` identity lookup with Argon2id email/password login; the shared configured-code path is deprecated and temporarily retained for frontend compatibility. Frontend admin cutover, bootstrap operations, audit trail, and secret rotation remain incomplete.
+- Admin backend authorization now uses real `users.role` identity lookup with Argon2id email/password login. Shared-code authentication has been removed; frontend admin cutover and initial bootstrap are complete. Audit trail and secret rotation remain incomplete.
 - Checkout has no payment provider or payment state workflow in the inspected code.
 - Admin order management is read-only in the current API/UI; status updates, fulfillment workflow, and auditability are TBD.
 - Deployment to a persistent public frontend/backend/database is not verified. Exact hosting, HTTPS, domain, backups, observability, and scaling plan are TBD.
@@ -58,13 +58,13 @@ Legacy implementation remains independently present and is not the current targe
 
 - Alembic revision `m3a_customer_auth` added the required `users.password_hash` column without changing the applied initial revision.
 - Register/login/logout/current-user backend flows are implemented and PostgreSQL smoke-verified; test accounts are cleaned up.
-- The deprecated admin shared-code session remains available for compatibility. Frontend customer Register/Login replacement is complete; the role-based backend admin identity is now implemented, while frontend admin cutover remains incomplete. Legacy demo customer backend compatibility remains for tests/transition only.
+- Frontend customer Register/Login replacement and role-based backend admin identity are complete. Legacy demo customer backend compatibility remains for tests/transition only.
 
 ## M3C1 role-based admin authorization status
 
 - Alembic revision `m3c1_admin_roles` added `users.role` with `customer` as the default and a customer/admin constraint; it was applied to `pal2paw` after verifying the database identity. No admin account was created.
 - Real admin email/password login and server-side role guards cover admin product operations, orders, and the legacy migration endpoint.
 - The interactive `python -m app.bootstrap_admin` mechanism uses getpass and Argon2id hashing for a future initial admin bootstrap; it was not run against PostgreSQL.
-- The shared-code admin path is deprecated but retained for backend compatibility. React admin login/session/CRUD/orders cutover is complete; initial real admin bootstrap and removal of the backend path are deferred to M3C3.
+- React admin login/session/CRUD/orders use real identity and role-based authorization. The initial real admin was bootstrapped, and the deprecated shared-code admin path has been removed.
 
 Do not treat this document as evidence that the application is production-ready. Re-verify each TBD item before release.

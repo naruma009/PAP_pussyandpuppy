@@ -17,7 +17,6 @@ def settings(tmp_path: Path) -> Settings:
         database_path=tmp_path / "pap-test.db",
         upload_dir=tmp_path / "uploads" / "products",
         secret_key="test-secret",
-        admin_password="test-admin",
     )
 
 
@@ -49,7 +48,16 @@ def seed_product(settings: Settings):
 
 
 def admin_login(client: TestClient) -> None:
-    assert client.post("/api/admin/login", json={"code": "test-admin"}).status_code == 200
+    email = "admin@example.com"
+    password = "correct horse battery"
+    assert client.post("/api/customer/register", json={"name": "Test Admin", "email": email, "password": password}).status_code == 200
+    with client.app.state.db_session_factory() as db:
+        from sqlalchemy import update
+        from app.models import users
+        db.execute(update(users).where(users.c.email == email).values(role="admin"))
+        db.commit()
+    assert client.post("/api/customer/logout").status_code == 204
+    assert client.post("/api/admin/login", json={"email": email, "password": password}).status_code == 200
 
 
 def customer_login(client: TestClient, email: str = "buyer@example.com") -> None:
