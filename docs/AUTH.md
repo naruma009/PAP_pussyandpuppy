@@ -16,7 +16,7 @@
 - Real admin login accepts email/password only for an active `users` row with `role=admin`; the identity session stores the user ID and every admin guard looks up the role server-side.
 - Admin product CRUD, admin orders, and the legacy migration endpoint call the backend admin guard.
 - The shared configured-code admin login remains temporarily available for frontend compatibility, but is deprecated and is not being extended. Frontend admin cutover/removal is planned for M3C2.
-- React has an admin provider/guard and an admin UI, but frontend hiding alone is not the security boundary.
+- React admin now uses the real email/password login and role-backed session restore; frontend hiding alone is not the security boundary. The initial real admin account still must be bootstrapped in M3C3.
 
 ## Production requirements
 

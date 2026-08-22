@@ -61,6 +61,13 @@ Object.assign(messages.en, {
 });
 
 Object.assign(messages.th, {
+  adminLoginIntro: "เข้าสู่ระบบด้วยบัญชีผู้ดูแลที่ได้รับอนุญาต", invalidAdminCredentials: "อีเมลหรือรหัสผ่านผู้ดูแลไม่ถูกต้อง",
+});
+Object.assign(messages.en, {
+  adminLoginIntro: "Sign in with an authorized admin account.", invalidAdminCredentials: "Invalid admin email or password.",
+});
+
+Object.assign(messages.th, {
   register: "Register", registerTitle: "Create your pal2paw account", registerIntro: "Save your details for a smoother checkout.", name: "Name", password: "Password", confirmPassword: "Confirm password", signingIn: "Signing in", registering: "Creating account", loginIntro: "Sign in to checkout and view your orders.", noAccount: "New to pal2paw?", hasAccount: "Already have an account?", passwordMismatch: "Passwords do not match.", emailRegistered: "This email is already registered.", invalidCredentials: "Invalid email or password.",
 });
 

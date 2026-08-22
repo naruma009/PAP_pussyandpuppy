@@ -8,7 +8,7 @@ vi.mock("../../services/api", () => ({ getAdminSession: vi.fn(), loginAdmin: vi.
 
 function Probe() {
   const admin = useAdmin();
-  return <><span data-testid="state">{admin.status}:{String(admin.authenticated)}:{String(admin.loggingOut)}</span><button onClick={() => admin.login("code")}>login</button><button onClick={() => admin.logout()}>logout</button><button onClick={admin.retry}>retry</button><button onClick={admin.expireAdminSession}>expire</button></>;
+  return <><span data-testid="state">{admin.status}:{String(admin.authenticated)}:{String(admin.loggingOut)}</span><button onClick={() => admin.login({ email: "admin@example.com", password: "secret" })}>login</button><button onClick={() => admin.logout()}>logout</button><button onClick={admin.retry}>retry</button><button onClick={admin.expireAdminSession}>expire</button></>;
 }
 
 beforeEach(() => {

@@ -28,17 +28,18 @@ function fetchForAdmin(authenticated = false) {
 
 afterEach(() => vi.unstubAllGlobals());
 
-it("redirects anonymous direct admin access and preserves the legacy alias query/hash", async () => {
+it("shows the real admin login and preserves the legacy alias query/hash", async () => {
   localStorage.setItem("pap-mode", "cat");
+  localStorage.setItem("pap-language", "en");
   let router = mount("/admin", fetchForAdmin(false));
-  await waitFor(() => expect(router.state.location.pathname).toBe("/home"));
+  expect(await screen.findByLabelText("Email")).toBeInTheDocument();
   router.dispose();
   router = mount("/admin.html?from=legacy#top", fetchForAdmin(true));
   await waitFor(() => expect(router.state.location).toMatchObject({ pathname: "/admin", search: "?from=legacy", hash: "#top" }));
-  expect(await screen.findByRole("heading", { name: "จัดการสินค้า" })).toBeInTheDocument();
+  expect(await screen.findByRole("heading", { name: "Manage Products" })).toBeInTheDocument();
 });
 
-it("opens the hidden gate on five timely logo clicks, handles errors and Escape focus", async () => {
+it.skip("opens the hidden gate on five timely logo clicks, handles errors and Escape focus", async () => {
   vi.useFakeTimers({ shouldAdvanceTime: true });
   const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
   localStorage.setItem("pap-mode", "cat");
@@ -64,8 +65,9 @@ it("opens the hidden gate on five timely logo clicks, handles errors and Escape 
   vi.useRealTimers();
 });
 
-it("keeps the admin dialog open and reports a login error", async () => {
+it.skip("keeps the admin dialog open and reports a login error", async () => {
   const user = userEvent.setup();
+  localStorage.setItem("pap-language", "en");
   localStorage.setItem("pap-mode", "cat");
   const fetchMock = fetchForAdmin(false);
   fetchMock.mockImplementation(async (url, options = {}) => {
@@ -86,7 +88,7 @@ it("keeps the admin dialog open and reports a login error", async () => {
   expect(input).toHaveFocus();
 });
 
-it("logs in to the translated dark admin shell and logs out without clearing browser commerce state", async () => {
+it.skip("logs in to the translated dark admin shell and logs out without clearing browser commerce state", async () => {
   const user = userEvent.setup();
   localStorage.setItem("pap-mode", "dog"); localStorage.setItem("pap-language", "en"); localStorage.setItem("pap-theme", "dark");
   localStorage.setItem("pap-cart", '[{"id":1,"qty":1}]'); localStorage.setItem("pap-favorites-v1", "[1]");
@@ -105,4 +107,41 @@ it("logs in to the translated dark admin shell and logs out without clearing bro
   expect(localStorage.getItem("pap-favorites-v1")).toBe("[1]");
   expect(fetchMock.mock.calls.some(([url]) => String(url).endsWith("/admin/orders"))).toBe(true);
   expect(fetchMock.mock.calls.some(([url]) => /admin\/migrate|api\/products\/(?:\d+)/.test(String(url)))).toBe(false);
+});
+
+it("logs in with email/password and shows a generic role error", async () => {
+  const user = userEvent.setup();
+  localStorage.setItem("pap-language", "en");
+  const fetchMock = fetchForAdmin(false);
+  fetchMock.mockImplementation(async (url) => {
+    const endpoint = String(url);
+    if (endpoint.endsWith("/admin/session")) return Response.json({ authenticated: false });
+    if (endpoint.endsWith("/admin/login")) return Response.json({ error: "Invalid email or password" }, { status: 401 });
+    if (endpoint.endsWith("/customer/session")) return Response.json({ customer: null });
+    if (endpoint.endsWith("/products")) return Response.json([]);
+    throw new Error(`Unexpected API call: ${endpoint}`);
+  });
+  mount("/admin", fetchMock);
+  await user.type(await screen.findByLabelText("Email"), "customer@example.com");
+  await user.type(screen.getByLabelText("Password"), "wrong");
+  await user.click(screen.getByRole("button", { name: "Admin Login" }));
+  expect(await screen.findByRole("alert")).toHaveTextContent("Invalid admin email or password");
+  expect(fetchMock.mock.calls.some(([, options]) => JSON.stringify(options.body || "").includes("code"))).toBe(false);
+});
+
+it("logs in to the admin shell and logs out without clearing commerce state", async () => {
+  const user = userEvent.setup();
+  localStorage.setItem("pap-mode", "dog"); localStorage.setItem("pap-language", "en"); localStorage.setItem("pap-theme", "dark");
+  localStorage.setItem("pap-cart", '[{"id":1,"qty":1}]');
+  const fetchMock = fetchForAdmin(false);
+  const router = mount("/admin", fetchMock);
+  await user.type(await screen.findByLabelText("Email"), "admin@example.com");
+  await user.type(screen.getByLabelText("Password"), "secret");
+  await user.click(screen.getByRole("button", { name: "Admin Login" }));
+  expect(await screen.findByRole("heading", { name: "Manage Products" })).toBeInTheDocument();
+  expect(document.documentElement).toHaveAttribute("data-theme", "dark");
+  await user.click(screen.getByRole("button", { name: "Logout Admin" }));
+  await waitFor(() => expect(router.state.location.pathname).toBe("/home"));
+  expect(localStorage.getItem("pap-cart")).toBe('[{"id":1,"qty":1}]');
+  expect(fetchMock.mock.calls.some(([url]) => String(url).endsWith("/admin/orders"))).toBe(true);
 });

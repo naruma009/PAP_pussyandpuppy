@@ -54,10 +54,10 @@ export default function AdminProvider({ children, bootstrap = true }) {
       invalidate(); mutationController.current?.abort(); mutationController.current = null;
       setAuthenticated(false); setStatus("ready"); setError(null); setAuthAction(null);
     },
-    async login(code) {
+    async login(credentials) {
       const { controller, requestVersion } = beginMutation("login");
       try {
-        const result = await loginAdmin(code, controller.signal);
+        const result = await loginAdmin(credentials, controller.signal);
         if (requestVersion !== version.current) return false;
         setAuthenticated(true); setStatus("ready");
         return result.authenticated === true;

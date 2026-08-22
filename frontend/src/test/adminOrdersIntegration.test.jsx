@@ -106,8 +106,8 @@ it("aborts orders as soon as logout starts", async () => {
 it("expires only Admin on orders 401 and preserves customer commerce state", async () => {
   localStorage.setItem("pap-mode", "dog"); localStorage.setItem("pap-language", "en"); localStorage.setItem("pap-theme", "dark"); localStorage.setItem("pap-cart", '[{"id":1,"qty":1}]'); localStorage.setItem("pap-favorites-v1", "[1]");
   const fetchMock = adminFetch(() => Response.json({ error: "Admin authentication required" }, { status: 401 }), customer);
-  const { router } = mount(fetchMock); await waitFor(() => expect(router.state.location.pathname).toBe("/home"));
-  expect(await screen.findByRole("button", { name: /Hi, Buyer/ })).toBeInTheDocument();
+  const { router } = mount(fetchMock); await waitFor(() => expect(router.state.location.pathname).toBe("/admin"));
+  expect(await screen.findByLabelText("Email")).toBeInTheDocument();
   expect(localStorage.getItem("pap-cart")).toBe('[{"id":1,"qty":1}]'); expect(localStorage.getItem("pap-favorites-v1")).toBe("[1]"); expect(localStorage.getItem("pap-theme")).toBe("dark"); expect(localStorage.getItem("pap-mode")).toBe("dog");
   expect(fetchMock.mock.calls.some(([url]) => String(url).endsWith("/admin/logout"))).toBe(false);
 });

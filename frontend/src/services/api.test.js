@@ -53,10 +53,11 @@ it("preserves the FastAPI error contract and 204 behavior", async () => {
   await expect(apiRequest("/logout", { method: "POST" })).resolves.toBeNull();
 });
 
-it("requires exact admin login 200 and logout 204 statuses", async () => {
+it("uses real admin email/password login and exact auth statuses", async () => {
   const fetchMock = vi.spyOn(globalThis, "fetch");
   fetchMock.mockResolvedValueOnce(Response.json({ authenticated: true }, { status: 202 }));
-  await expect(loginAdmin("code")).rejects.toMatchObject({ status: 202 });
+  await expect(loginAdmin({ email: "admin@example.com", password: "secret" })).rejects.toMatchObject({ status: 202 });
+  expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({ email: "admin@example.com", password: "secret" });
   fetchMock.mockResolvedValueOnce(new Response(null, { status: 200 }));
   await expect(logoutAdmin()).rejects.toMatchObject({ status: 200 });
   fetchMock.mockResolvedValueOnce(new Response(null, { status: 204 }));

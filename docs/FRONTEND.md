@@ -18,7 +18,7 @@ Important feature areas include catalog/product discovery, cart and checkout, cu
 
 Customer storefront coverage exists for catalog, detail, cart, real Register/Login/Logout/session restore, checkout, and customer orders. The client sends same-origin credentials to the API and does not store passwords or tokens in browser storage. Checkout and order history require the authenticated customer session; server responses remain authoritative for order results.
 
-Admin UI coverage exists for login/session, product create/update/delete, stock fields, uploads, and order listing. Order status management is not evidenced by the current API/UI.
+Admin UI coverage exists for real email/password login/session restore/logout, product create/update/delete, stock fields, uploads, and order listing. The React admin UI no longer calls the deprecated shared-code endpoint. Order status management is not evidenced by the current API/UI.
 
 ## Legacy frontend
 

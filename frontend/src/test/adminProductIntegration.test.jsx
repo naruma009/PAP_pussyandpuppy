@@ -130,8 +130,8 @@ it("expires only admin state on product 401 and preserves customer commerce stor
   });
   const { router } = mount(fetchMock); await fillCreate(user);
   await user.click(screen.getByRole("button", { name: "Add Product" }));
-  await waitFor(() => expect(router.state.location.pathname).toBe("/home"));
-  expect(await screen.findByRole("button", { name: /Hi, Buyer/ })).toBeInTheDocument();
+  await waitFor(() => expect(router.state.location.pathname).toBe("/admin"));
+  expect(await screen.findByLabelText("Email")).toBeInTheDocument();
   expect(localStorage.getItem("pap-cart")).toBe('[{"id":1,"qty":1}]'); expect(localStorage.getItem("pap-favorites-v1")).toBe("[1]"); expect(localStorage.getItem("pap-theme")).toBe("dark");
   expect(fetchMock.mock.calls.some(([url]) => String(url).endsWith("/admin/logout"))).toBe(false);
 });
