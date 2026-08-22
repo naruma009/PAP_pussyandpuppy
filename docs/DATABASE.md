@@ -17,4 +17,10 @@ The legacy Flask app uses a separate SQLite file at `instance/pap.db` and root `
 - Schema changes must use a migration mechanism. Do not rely on startup-only ad hoc schema mutation.
 - Define backups, rollback, indexes, constraints, transaction behavior, and connection pooling before production cutover; details are TBD.
 
-No real database connection was opened for M0.
+## M2 connectivity status
+
+- SSH tunnel to the development PostgreSQL endpoint passed; local endpoint is `localhost:5434`.
+- PostgreSQL connectivity through the tunnel passed at the local TCP endpoint.
+- The `pal2paw` PostgreSQL database exists and currently has no tables, as confirmed for M2 planning.
+- FastAPI application integration with PostgreSQL has not started.
+- No PostgreSQL SQL, schema creation, migration, or application database change was performed in M2B.
