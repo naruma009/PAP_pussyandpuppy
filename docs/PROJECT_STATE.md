@@ -51,6 +51,7 @@ Legacy implementation remains independently present and is not the current targe
 
 - Alembic revision `m2c1_initial` initialized the `pal2paw` schema: `users`, `products`, `orders`, `order_items`, and `settings`.
 - Application connectivity was verified against PostgreSQL 16 through the development SSH tunnel.
-- SQLite/local demo data migration has not started; production deployment and operational verification are still pending.
+- Current demo data from `backend/data/admin-smoke.db` was migrated to PostgreSQL with preserved product/order relationships; the SQLite source remains in place.
+- No `users` were migrated. Production deployment and operational verification are still pending.
 
 Do not treat this document as evidence that the application is production-ready. Re-verify each TBD item before release.

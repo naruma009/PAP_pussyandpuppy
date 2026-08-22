@@ -1,12 +1,13 @@
 from datetime import datetime
 
-from sqlalchemy import Boolean, CheckConstraint, Column, DateTime, ForeignKey, Integer, MetaData, Numeric, String, Table, Text
+from sqlalchemy import Boolean, CheckConstraint, Column, DateTime, ForeignKey, Integer, BigInteger, MetaData, Numeric, String, Table, Text
 from sqlalchemy.types import TypeDecorator
 
 from app.postgres import Base
 
 
 metadata: MetaData = Base.metadata
+AppInteger = BigInteger().with_variant(Integer, "sqlite")
 
 
 class AppTimestamp(TypeDecorator):
@@ -28,7 +29,7 @@ class AppTimestamp(TypeDecorator):
 users = Table(
     "users",
     metadata,
-    Column("id", Integer, primary_key=True),
+    Column("id", AppInteger, primary_key=True),
     Column("email", Text, nullable=False),
     Column("full_name", Text, nullable=False),
     Column("created_at", AppTimestamp(), nullable=False),
@@ -39,7 +40,7 @@ users = Table(
 products = Table(
     "products",
     metadata,
-    Column("id", Integer, primary_key=True),
+    Column("id", AppInteger, primary_key=True),
     Column("name", Text, nullable=False),
     Column("description", Text, nullable=False),
     Column("price", Numeric(12, 2), nullable=False),
@@ -62,7 +63,7 @@ orders = Table(
     "orders",
     metadata,
     Column("id", String, primary_key=True),
-    Column("user_id", Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True),
+    Column("user_id", AppInteger, ForeignKey("users.id", ondelete="SET NULL"), nullable=True),
     Column("customer_name", Text, nullable=False),
     Column("customer_email", Text, nullable=False),
     Column("phone", Text, nullable=False),
@@ -79,9 +80,9 @@ orders = Table(
 order_items = Table(
     "order_items",
     metadata,
-    Column("id", Integer, primary_key=True),
+    Column("id", AppInteger, primary_key=True),
     Column("order_id", String, ForeignKey("orders.id", ondelete="CASCADE"), nullable=False),
-    Column("product_id", Integer, ForeignKey("products.id", ondelete="SET NULL"), nullable=True),
+    Column("product_id", AppInteger, ForeignKey("products.id", ondelete="SET NULL"), nullable=True),
     Column("product_name", Text, nullable=False),
     Column("quantity", Integer, nullable=False),
     Column("unit_price", Numeric(12, 2), nullable=False),

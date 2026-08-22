@@ -46,3 +46,10 @@ The legacy Flask app uses a separate SQLite file at `instance/pap.db` and root `
 - Required foreign keys, constraints, and core indexes were verified with read-only catalog queries.
 - PostgreSQL application connectivity and temporary-data product/order/stock smoke tests passed through `localhost:5434`.
 - SQLite/local demo data migration has not started, and no account/auth data was created.
+
+## M2E demo data migration status
+
+- Confirmed source: `backend/data/admin-smoke.db`; the legacy `instance/pap.db` was not included.
+- Migrated products, orders, and order items to `pal2paw` with preserved IDs and relationships. Source SQLite remains unchanged.
+- The repeatable migration command rejects unexpected target data, runs inserts in one transaction, and returns a no-op when the target already matches the source.
+- `users` were not migrated; the source contains demo session data rather than account identities.
