@@ -71,6 +71,7 @@ async def customer_register(request: Request, db: Session = Depends(get_db)):
                     email=email,
                     full_name=name,
                     password_hash=hash_password(password),
+                    role="customer",
                     created_at=now,
                     updated_at=now,
                     status="active",
@@ -83,6 +84,7 @@ async def customer_register(request: Request, db: Session = Depends(get_db)):
 
     user = db.execute(select(users).where(users.c.id == user_id)).mappings().one()
     session = session_data(request)
+    session.pop("admin_authenticated", None)
     session.pop("customer", None)
     session["customer_user_id"] = user_id
     return {"user": safe_user(user)}
@@ -98,7 +100,9 @@ async def customer_login(request: Request, db: Session = Depends(get_db)):
         name = str(data.get("name", "")).strip()
         if not name or not valid_email(email):
             return error_response("Name and valid email are required", 400)
-        session_data(request)["customer"] = {"name": name, "email": email}
+        session = session_data(request)
+        session.pop("admin_authenticated", None)
+        session["customer"] = {"name": name, "email": email}
         return {"customer": {"name": name, "email": email}}
 
     user = db.execute(
@@ -107,6 +111,7 @@ async def customer_login(request: Request, db: Session = Depends(get_db)):
     if not valid_email(email) or not isinstance(password, str) or not user or not verify_password(user["password_hash"], password):
         return error_response("Invalid email or password", 401)
     session = session_data(request)
+    session.pop("admin_authenticated", None)
     session.pop("customer", None)
     session["customer_user_id"] = user["id"]
     return {"user": safe_user(user)}
@@ -144,7 +149,7 @@ def customer_session(request: Request, db: Session = Depends(get_db)):
 
 @router.get("/customer/orders")
 def customer_orders(request: Request, db: Session = Depends(get_db)):
-    if denied := require_customer(request):
+    if denied := require_customer(request, db):
         return denied
     session = session_data(request)
     user_id = session.get("customer_user_id")

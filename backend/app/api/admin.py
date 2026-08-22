@@ -7,9 +7,10 @@ from sqlalchemy import insert, select, update
 from sqlalchemy.orm import Session
 
 from app.api.customer import silent_json
-from app.api.dependencies import require_admin
+from app.api.dependencies import authenticated_user, require_admin
+from app.auth import verify_password
 from app.db import get_db
-from app.models import order_items, orders, products, settings
+from app.models import order_items, orders, products, settings, users
 from app.responses import error_response
 from app.serializers import order_json
 from app.sessions import session_data
@@ -23,8 +24,26 @@ def utc_now() -> str:
 
 
 @router.post("/admin/login")
-async def admin_login(request: Request):
-    supplied = str((await silent_json(request)).get("code", ""))
+async def admin_login(request: Request, db: Session = Depends(get_db)):
+    data = await silent_json(request)
+    password = data.get("password")
+    if password is not None:
+        email = str(data.get("email") or "").strip().casefold()
+        user = db.execute(
+            select(users).where(
+                users.c.email.ilike(email),
+                users.c.status == "active",
+                users.c.role == "admin",
+            )
+        ).mappings().first()
+        if not email or not isinstance(password, str) or not user or not verify_password(user["password_hash"], password):
+            return error_response("Invalid email or password", 401)
+        session = session_data(request)
+        session.pop("admin_authenticated", None)
+        session.pop("customer", None)
+        session["customer_user_id"] = user["id"]
+        return {"authenticated": True}
+    supplied = str(data.get("code", ""))
     if not hmac.compare_digest(supplied, request.app.state.settings.admin_password):
         return error_response("Invalid code", 401)
     session_data(request)["admin_authenticated"] = True
@@ -33,18 +52,21 @@ async def admin_login(request: Request):
 
 @router.post("/admin/logout")
 def admin_logout(request: Request):
-    session_data(request).pop("admin_authenticated", None)
+    session = session_data(request)
+    session.pop("admin_authenticated", None)
+    session.pop("customer_user_id", None)
     return Response(status_code=204)
 
 
 @router.get("/admin/session")
-def admin_session(request: Request):
-    return {"authenticated": bool(session_data(request).get("admin_authenticated"))}
+def admin_session(request: Request, db: Session = Depends(get_db)):
+    user = authenticated_user(request, db)
+    return {"authenticated": bool(session_data(request).get("admin_authenticated") or (user and user["role"] == "admin"))}
 
 
 @router.get("/admin/orders")
 def admin_orders(request: Request, db: Session = Depends(get_db)):
-    if denied := require_admin(request):
+    if denied := require_admin(request, db):
         return denied
     order_rows = db.execute(select(orders).order_by(orders.c.created_at.desc())).mappings().all()
     return [
@@ -58,7 +80,7 @@ def admin_orders(request: Request, db: Session = Depends(get_db)):
 
 @router.post("/admin/migrate")
 async def migrate_legacy(request: Request, db: Session = Depends(get_db)):
-    if denied := require_admin(request):
+    if denied := require_admin(request, db):
         return denied
     if request.app.state.settings.is_production:
         return error_response("Legacy migration is disabled in production", 403)

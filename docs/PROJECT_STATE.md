@@ -40,7 +40,7 @@ Legacy implementation remains independently present and is not the current targe
 
 - PostgreSQL schema initialization and application connectivity are verified for the development `pal2paw` database; data migration and production deployment remain outstanding.
 - Customer authentication uses persistent users and Argon2id password hashes; React Register/Login/Logout, session restoration, checkout guard, and customer order guard are implemented. Verification/recovery/MFA, rate limiting, and account lifecycle controls remain TBD.
-- Admin authentication is a single shared configured code stored in a session; a production-grade identity, authorization model, audit trail, and secret rotation are TBD.
+- Admin backend authorization now uses real `users.role` identity lookup with Argon2id email/password login; the shared configured-code path is deprecated and temporarily retained for frontend compatibility. Frontend admin cutover, bootstrap operations, audit trail, and secret rotation remain incomplete.
 - Checkout has no payment provider or payment state workflow in the inspected code.
 - Admin order management is read-only in the current API/UI; status updates, fulfillment workflow, and auditability are TBD.
 - Deployment to a persistent public frontend/backend/database is not verified. Exact hosting, HTTPS, domain, backups, observability, and scaling plan are TBD.
@@ -58,6 +58,13 @@ Legacy implementation remains independently present and is not the current targe
 
 - Alembic revision `m3a_customer_auth` added the required `users.password_hash` column without changing the applied initial revision.
 - Register/login/logout/current-user backend flows are implemented and PostgreSQL smoke-verified; test accounts are cleaned up.
-- The existing admin shared-code session remains unchanged. Frontend customer Register/Login replacement is complete; production admin identity/role migration remains incomplete. Legacy demo customer backend compatibility remains for tests/transition only.
+- The deprecated admin shared-code session remains available for compatibility. Frontend customer Register/Login replacement is complete; the role-based backend admin identity is now implemented, while frontend admin cutover remains incomplete. Legacy demo customer backend compatibility remains for tests/transition only.
+
+## M3C1 role-based admin authorization status
+
+- Alembic revision `m3c1_admin_roles` added `users.role` with `customer` as the default and a customer/admin constraint; it was applied to `pal2paw` after verifying the database identity. No admin account was created.
+- Real admin email/password login and server-side role guards cover admin product operations, orders, and the legacy migration endpoint.
+- The interactive `python -m app.bootstrap_admin` mechanism uses getpass and Argon2id hashing for a future initial admin bootstrap; it was not run against PostgreSQL.
+- The shared-code admin path is deprecated but retained for compatibility. React admin login cutover and removal of that path are deferred to M3C2.
 
 Do not treat this document as evidence that the application is production-ready. Re-verify each TBD item before release.

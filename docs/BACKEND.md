@@ -10,7 +10,7 @@ The current backend is under `backend/app/`. `main.py` creates the FastAPI app, 
 - Catalog: `GET /api/products`, `GET /api/products/{id}`
 - Customer: register, real email/password login, current-user/session/logout, and `GET /api/customer/orders`; legacy name/email demo login remains temporarily compatible
 - Orders: `POST /api/orders` with customer guard, server-side stock/total validation, and transaction handling
-- Admin: login/session/logout, `GET /api/admin/orders`, and development-only `/api/admin/migrate`
+- Admin: role-aware email/password login/session/logout, deprecated shared-code compatibility login, `GET /api/admin/orders`, and development-only `/api/admin/migrate`
 - Product management: admin-protected `POST /api/products`, `PUT /api/products/{id}`, `DELETE /api/products/{id}`
 
 Uploads are handled by FastAPI under the configured non-legacy upload directory. API responses use an `error` field for the tested error contract.
@@ -21,4 +21,4 @@ Root `app.py` is the Flask implementation of the same broad catalog, cart/order,
 
 ## Gaps before production
 
-The FastAPI persistence layer is now ported to SQLAlchemy, and PostgreSQL schema/data plus customer authentication have been verified. Customer passwords use Argon2id hashes and the existing secure session cookie stores only a user reference. Alembic migrations must be run through the deployment process rather than startup DDL. Frontend Register/Login replacement, production deployment, production-grade admin identity/roles, admin order mutations, payment integration, observability, and operational controls are not confirmed complete.
+The FastAPI persistence layer is now ported to SQLAlchemy, and PostgreSQL schema/data plus customer authentication have been verified. Customer passwords use Argon2id hashes and the existing secure session cookie stores only a user reference. Admin authorization now uses the `users.role` value looked up server-side, with an interactive getpass-based bootstrap CLI available but not run. Alembic migrations must be run through the deployment process rather than startup DDL. Frontend admin cutover, production deployment, admin order mutations, payment integration, observability, and operational controls are not confirmed complete.

@@ -33,6 +33,7 @@ users = Table(
     Column("email", Text, nullable=False),
     Column("full_name", Text, nullable=False),
     Column("password_hash", Text, nullable=False),
+    Column("role", Text, nullable=False, server_default="customer"),
     Column("created_at", AppTimestamp(), nullable=False),
     Column("updated_at", AppTimestamp(), nullable=False),
     Column("status", Text, nullable=False, server_default="active"),

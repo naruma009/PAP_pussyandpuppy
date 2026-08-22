@@ -26,7 +26,7 @@ def utc_now() -> str:
 
 @router.post("/orders")
 async def create_order(request: Request, db: Session = Depends(get_db)):
-    if denied := require_customer(request):
+    if denied := require_customer(request, db):
         return denied
     data = await silent_json(request)
     shipping = data.get("shipping") or {}

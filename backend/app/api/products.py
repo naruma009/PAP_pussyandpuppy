@@ -71,7 +71,7 @@ def get_product(product_id: str, db: Session = Depends(get_db)):
 
 @router.post("/products")
 async def create_product(request: Request, db: Session = Depends(get_db)):
-    if denied := require_admin(request):
+    if denied := require_admin(request, db):
         return denied
     new_url = ""
     try:
@@ -90,7 +90,7 @@ async def create_product(request: Request, db: Session = Depends(get_db)):
 
 @router.put("/products/{product_id}")
 async def update_product(product_id: str, request: Request, db: Session = Depends(get_db)):
-    if denied := require_admin(request):
+    if denied := require_admin(request, db):
         return denied
     try:
         parsed_id = int(product_id)
@@ -116,7 +116,7 @@ async def update_product(product_id: str, request: Request, db: Session = Depend
 
 @router.delete("/products/{product_id}")
 def delete_product(product_id: str, request: Request, db: Session = Depends(get_db)):
-    if denied := require_admin(request):
+    if denied := require_admin(request, db):
         return denied
     try:
         parsed_id = int(product_id)
