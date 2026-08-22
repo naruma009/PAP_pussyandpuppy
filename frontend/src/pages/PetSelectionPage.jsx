@@ -38,7 +38,7 @@ export default function PetSelectionPage() {
       <button className="secret-button" type="button" aria-label="Secret mode" onClick={enterHorror}>X</button>
       <PreferenceControls compact />
       <main className="landing">
-        <div className="brand"><span>P</span>pal2paw</div>
+        <div className="brand">pal2paw</div>
         <h1>{t("landingTitle")}</h1>
         <p className="landing-intro">{t("landingIntro")}</p>
         <div className="pet-choices">
