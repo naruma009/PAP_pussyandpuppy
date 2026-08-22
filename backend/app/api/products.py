@@ -1,12 +1,15 @@
-import sqlite3
+from collections.abc import Mapping
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import Response
 from starlette.datastructures import UploadFile
+from sqlalchemy import delete, insert, select, update
+from sqlalchemy.orm import Session
 
 from app.api.dependencies import require_admin
 from app.db import get_db
+from app.models import products
 from app.responses import error_response
 from app.serializers import product_json
 from app.uploads import delete_upload, save_upload
@@ -18,7 +21,7 @@ def utc_now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
-async def product_payload(request: Request, existing: sqlite3.Row | None = None) -> tuple[dict, str]:
+async def product_payload(request: Request, existing: Mapping | None = None) -> tuple[dict, str]:
     form = await request.form()
     required = ("name", "description", "price", "stock", "category", "petType")
     if any(form.get(field) in (None, "") for field in required):
@@ -51,87 +54,79 @@ async def product_payload(request: Request, existing: sqlite3.Row | None = None)
 
 
 @router.get("/products")
-def list_products(db: sqlite3.Connection = Depends(get_db)):
-    return [product_json(row) for row in db.execute("SELECT * FROM products ORDER BY id").fetchall()]
+def list_products(db: Session = Depends(get_db)):
+    rows = db.execute(select(products).order_by(products.c.id)).mappings().all()
+    return [product_json(row) for row in rows]
 
 
 @router.get("/products/{product_id}")
-def get_product(product_id: str, db: sqlite3.Connection = Depends(get_db)):
+def get_product(product_id: str, db: Session = Depends(get_db)):
     try:
         parsed_id = int(product_id)
     except ValueError:
         return error_response("Not Found", 404)
-    row = db.execute("SELECT * FROM products WHERE id = ?", (parsed_id,)).fetchone()
+    row = db.execute(select(products).where(products.c.id == parsed_id)).mappings().first()
     return product_json(row) if row else error_response("Product not found", 404)
 
 
 @router.post("/products")
-async def create_product(request: Request, db: sqlite3.Connection = Depends(get_db)):
+async def create_product(request: Request, db: Session = Depends(get_db)):
     if denied := require_admin(request):
         return denied
     new_url = ""
     try:
         data, new_url = await product_payload(request)
         now = utc_now()
-        cursor = db.execute(
-            """INSERT INTO products
-               (name,description,price,stock,category,pet_type,age_group,image_url,emoji,featured,created_at,updated_at)
-               VALUES (:name,:description,:price,:stock,:category,:pet_type,:age_group,:image_url,:emoji,:featured,:created_at,:updated_at)""",
-            {**data, "created_at": now, "updated_at": now},
-        )
-        db.commit()
+        with db.begin():
+            result = db.execute(insert(products).values(**data, created_at=now, updated_at=now))
+            product_id = result.inserted_primary_key[0]
     except (ValueError, TypeError) as error:
         delete_upload(new_url, request.app.state.settings.upload_dir)
-        db.rollback()
         return error_response(str(error), 400)
-    row = db.execute("SELECT * FROM products WHERE id = ?", (cursor.lastrowid,)).fetchone()
+    row = db.execute(select(products).where(products.c.id == product_id)).mappings().one()
     from fastapi.responses import JSONResponse
     return JSONResponse(product_json(row), status_code=201)
 
 
 @router.put("/products/{product_id}")
-async def update_product(product_id: str, request: Request, db: sqlite3.Connection = Depends(get_db)):
+async def update_product(product_id: str, request: Request, db: Session = Depends(get_db)):
     if denied := require_admin(request):
         return denied
     try:
         parsed_id = int(product_id)
     except ValueError:
         return error_response("Not Found", 404)
-    existing = db.execute("SELECT * FROM products WHERE id = ?", (parsed_id,)).fetchone()
+    existing = db.execute(select(products).where(products.c.id == parsed_id)).mappings().first()
     if not existing:
         return error_response("Product not found", 404)
+    db.rollback()
     new_url = ""
     try:
         data, new_url = await product_payload(request, existing)
-        db.execute(
-            """UPDATE products SET name=:name,description=:description,price=:price,stock=:stock,
-               category=:category,pet_type=:pet_type,age_group=:age_group,image_url=:image_url,
-               emoji=:emoji,featured=:featured,updated_at=:updated_at WHERE id=:id""",
-            {**data, "updated_at": utc_now(), "id": parsed_id},
-        )
-        db.commit()
+        with db.begin():
+            db.execute(update(products).where(products.c.id == parsed_id).values(**data, updated_at=utc_now()))
     except (ValueError, TypeError) as error:
         delete_upload(new_url, request.app.state.settings.upload_dir)
-        db.rollback()
         return error_response(str(error), 400)
     if new_url:
         delete_upload(existing["image_url"], request.app.state.settings.upload_dir)
-    row = db.execute("SELECT * FROM products WHERE id = ?", (parsed_id,)).fetchone()
+    row = db.execute(select(products).where(products.c.id == parsed_id)).mappings().one()
     return product_json(row)
 
 
 @router.delete("/products/{product_id}")
-def delete_product(product_id: str, request: Request, db: sqlite3.Connection = Depends(get_db)):
+def delete_product(product_id: str, request: Request, db: Session = Depends(get_db)):
     if denied := require_admin(request):
         return denied
     try:
         parsed_id = int(product_id)
     except ValueError:
         return error_response("Not Found", 404)
-    row = db.execute("SELECT * FROM products WHERE id = ?", (parsed_id,)).fetchone()
+    row = db.execute(select(products).where(products.c.id == parsed_id)).mappings().first()
     if not row:
         return error_response("Product not found", 404)
-    db.execute("DELETE FROM products WHERE id = ?", (parsed_id,))
-    db.commit()
+    db.rollback()
+    with db.begin():
+        db.execute(delete(products).where(products.c.id == parsed_id))
     delete_upload(row["image_url"], request.app.state.settings.upload_dir)
     return Response(status_code=204)

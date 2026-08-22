@@ -1,31 +1,29 @@
-import sqlite3
 from collections.abc import Iterator
-from pathlib import Path
 
 from fastapi import Request
+from sqlalchemy import Engine
+from sqlalchemy.orm import Session, sessionmaker
+
+from app.config import Settings
+from app.models import metadata
+from app.postgres import create_database_engine, create_session_factory
 
 
-def connect(database_path: Path) -> sqlite3.Connection:
-    connection = sqlite3.connect(database_path, timeout=5, check_same_thread=False)
-    connection.row_factory = sqlite3.Row
-    connection.execute("PRAGMA foreign_keys = ON")
-    return connection
-
-
-def initialize_database(database_path: Path) -> None:
-    database_path.parent.mkdir(parents=True, exist_ok=True)
-    connection = connect(database_path)
+def initialize_database(settings: Settings, engine: Engine | None = None) -> None:
+    if settings.database_url:
+        raise RuntimeError("PostgreSQL databases must be initialized with Alembic")
+    selected_engine = engine or create_database_engine(settings)
     try:
-        schema_path = Path(__file__).with_name("schema.sql")
-        connection.executescript(schema_path.read_text(encoding="utf-8"))
-        connection.commit()
+        metadata.create_all(selected_engine)
     finally:
-        connection.close()
+        if engine is None:
+            selected_engine.dispose()
 
 
-def get_db(request: Request) -> Iterator[sqlite3.Connection]:
-    connection = connect(request.app.state.settings.database_path)
+def get_db(request: Request) -> Iterator[Session]:
+    session_factory: sessionmaker[Session] = request.app.state.db_session_factory
+    session = session_factory()
     try:
-        yield connection
+        yield session
     finally:
-        connection.close()
+        session.close()

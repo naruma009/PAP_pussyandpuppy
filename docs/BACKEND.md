@@ -2,7 +2,7 @@
 
 ## FastAPI structure
 
-The current backend is under `backend/app/`. `main.py` creates the FastAPI app, installs session middleware and request protections, mounts routers, and serves product uploads. `config.py` loads `PAP_API_` settings plus environment-only `DATABASE_URL`; `db.py` still provides the SQLite connections used by current API routes. `postgres.py` provides the SQLAlchemy engine/session foundation for the planned PostgreSQL cutover.
+The current backend is under `backend/app/`. `main.py` creates the FastAPI app, installs session middleware and request protections, mounts routers, and serves product uploads. `config.py` loads `PAP_API_` settings plus environment-only `DATABASE_URL`; `db.py` provides SQLAlchemy sessions and local SQLite initialization compatibility. `postgres.py` provides the engine/session foundation and `models.py` defines the current Core table metadata.
 
 ## API groups
 
@@ -21,4 +21,4 @@ Root `app.py` is the Flask implementation of the same broad catalog, cart/order,
 
 ## Gaps before production
 
-The FastAPI persistence layer must still be replaced or extended for PostgreSQL 16; M2C1 adds the SQLAlchemy/Alembic/psycopg foundation but does not port API queries or run migrations. Real PostgreSQL integration tests remain outstanding. Customer registration/account identity, production-grade admin identity/roles, admin order mutations, payment integration, deployment configuration, observability, and operational controls are not confirmed complete.
+The FastAPI persistence layer is now ported to SQLAlchemy, but PostgreSQL 16 application integration and real PostgreSQL tests remain outstanding until M2D. Alembic migrations must be run through the deployment process rather than startup DDL. Customer registration/account identity, production-grade admin identity/roles, admin order mutations, payment integration, deployment configuration, observability, and operational controls are not confirmed complete.

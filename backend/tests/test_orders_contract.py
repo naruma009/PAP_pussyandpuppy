@@ -1,18 +1,21 @@
-import sqlite3
 from concurrent.futures import ThreadPoolExecutor
 
 from fastapi.testclient import TestClient
+from sqlalchemy import select
 
 from app.main import create_app
+from app.models import products
+from app.postgres import create_database_engine
 from conftest import admin_login, customer_login, shipping
 
 
 def stock(settings, product_id):
-    connection = sqlite3.connect(settings.database_path)
+    engine = create_database_engine(settings)
     try:
-        return connection.execute("SELECT stock FROM products WHERE id = ?", (product_id,)).fetchone()[0]
+        with engine.connect() as connection:
+            return connection.execute(select(products.c.stock).where(products.c.id == product_id)).scalar_one()
     finally:
-        connection.close()
+        engine.dispose()
 
 
 def test_order_authoritative_total_and_history(client, settings, seed_product):

@@ -1,10 +1,11 @@
-import sqlite3
-
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import Response
+from sqlalchemy import select
+from sqlalchemy.orm import Session
 
 from app.api.dependencies import require_customer
 from app.db import get_db
+from app.models import order_items, orders
 from app.responses import error_response
 from app.serializers import order_json
 from app.sessions import session_data
@@ -44,18 +45,17 @@ def customer_session(request: Request):
 
 
 @router.get("/customer/orders")
-def customer_orders(request: Request, db: sqlite3.Connection = Depends(get_db)):
+def customer_orders(request: Request, db: Session = Depends(get_db)):
     if denied := require_customer(request):
         return denied
     email = session_data(request)["customer"]["email"]
-    orders = db.execute(
-        "SELECT * FROM orders WHERE lower(customer_email) = lower(?) ORDER BY created_at DESC",
-        (email,),
-    ).fetchall()
+    order_rows = db.execute(
+        select(orders).where(orders.c.customer_email.ilike(email)).order_by(orders.c.created_at.desc())
+    ).mappings().all()
     return [
         order_json(
             order,
-            db.execute("SELECT * FROM order_items WHERE order_id = ?", (order["id"],)).fetchall(),
+            db.execute(select(order_items).where(order_items.c.order_id == order["id"])).mappings().all(),
         )
-        for order in orders
+        for order in order_rows
     ]

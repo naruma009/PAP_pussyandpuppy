@@ -2,7 +2,7 @@
 
 ## Current state
 
-FastAPI runtime queries still use Python `sqlite3` and `backend/app/schema.sql`. PostgreSQL foundation code now provides SQLAlchemy engine/session setup, environment-only `DATABASE_URL` configuration, and Alembic scaffolding; application query cutover has not started.
+FastAPI current API queries now use SQLAlchemy 2.x sessions and Core statements. SQLite remains a local/test compatibility backend initialized from SQLAlchemy metadata; PostgreSQL production integration is not complete.
 
 The legacy Flask app uses a separate SQLite file at `instance/pap.db` and root `schema.sql`. FastAPI runtime guards reject the legacy database and upload paths.
 
@@ -31,4 +31,11 @@ The legacy Flask app uses a separate SQLite file at `instance/pap.db` and root `
 - `DATABASE_URL` is read from environment/.env configuration without logging or embedding credentials.
 - SQLAlchemy foundation retains SQLite fallback for the existing local test suite.
 - Alembic initial revision `m2c1_initial` defines `users`, `products`, `orders`, `order_items`, and `settings` with constraints and indexes.
-- Application API queries still run through the SQLite layer; PostgreSQL migration has not been run against any server.
+- Application API persistence has been ported to SQLAlchemy; PostgreSQL migration has not been run against any server.
+
+## M2C2 persistence status
+
+- Products, orders, order items, customer order history, admin order listing, stock updates, rollback, and the existing settings migration marker use SQLAlchemy sessions.
+- SQLite compatibility tests remain green, including concurrent stock protection.
+- Raw `sqlite3` remains only in test fixtures/legacy characterization support; current `backend/app` query code no longer imports it.
+- PostgreSQL production integration and real PostgreSQL test coverage remain M2D work.

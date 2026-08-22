@@ -1,12 +1,22 @@
-import sqlite3
+from collections.abc import Mapping
+from datetime import datetime
+from decimal import Decimal
 
 
-def product_json(row: sqlite3.Row) -> dict:
+def json_number(value):
+    return float(value) if isinstance(value, Decimal) else value
+
+
+def json_time(value):
+    return value.isoformat() if isinstance(value, datetime) else value
+
+
+def product_json(row: Mapping) -> dict:
     return {
         "id": row["id"],
         "name": row["name"],
         "description": row["description"],
-        "price": row["price"],
+        "price": json_number(row["price"]),
         "stock": row["stock"],
         "category": row["category"],
         "petType": row["pet_type"],
@@ -14,17 +24,17 @@ def product_json(row: sqlite3.Row) -> dict:
         "image": row["image_url"],
         "emoji": row["emoji"],
         "featured": bool(row["featured"]),
-        "createdAt": row["created_at"],
-        "updatedAt": row["updated_at"],
+        "createdAt": json_time(row["created_at"]),
+        "updatedAt": json_time(row["updated_at"]),
     }
 
 
-def order_json(order: sqlite3.Row, items: list[sqlite3.Row]) -> dict:
+def order_json(order: Mapping, items: list[Mapping]) -> dict:
     return {
         "id": order["id"],
-        "createdAt": order["created_at"],
+        "createdAt": json_time(order["created_at"]),
         "status": order["status"],
-        "total": order["total"],
+        "total": json_number(order["total"]),
         "customer": {
             "fullName": order["customer_name"],
             "email": order["customer_email"],
@@ -39,8 +49,8 @@ def order_json(order: sqlite3.Row, items: list[sqlite3.Row]) -> dict:
                 "productId": item["product_id"],
                 "name": item["product_name"],
                 "qty": item["quantity"],
-                "price": item["unit_price"],
-                "subtotal": item["subtotal"],
+                "price": json_number(item["unit_price"]),
+                "subtotal": json_number(item["subtotal"]),
             }
             for item in items
         ],

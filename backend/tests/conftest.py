@@ -30,7 +30,7 @@ def client(settings: Settings):
 @pytest.fixture
 def seed_product(settings: Settings):
     def seed(*, name: str = "Test Bed", price: float = 100.0, stock: int = 5, image: str = "") -> int:
-        initialize_database(settings.database_path)
+        initialize_database(settings)
         connection = sqlite3.connect(settings.database_path)
         try:
             cursor = connection.execute(

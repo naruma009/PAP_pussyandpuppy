@@ -12,6 +12,7 @@ from app.api.orders import router as orders_router
 from app.api.products import router as products_router
 from app.config import Settings, get_settings
 from app.db import initialize_database
+from app.postgres import create_database_engine, create_session_factory
 from app.sessions import FlaskSessionMiddleware
 
 
@@ -23,19 +24,24 @@ def create_app(
     selected = settings or get_settings()
     project_root = Path(__file__).resolve().parents[2]
     selected.validate_runtime(project_root)
+    engine = create_database_engine(selected)
     if initialize:
         selected.upload_dir.mkdir(parents=True, exist_ok=True)
-        initialize_database(selected.database_path)
+        initialize_database(selected, engine)
 
     @asynccontextmanager
     async def lifespan(_application: FastAPI):
         if initialize_on_startup:
             selected.upload_dir.mkdir(parents=True, exist_ok=True)
-            initialize_database(selected.database_path)
+            if not selected.database_url:
+                initialize_database(selected, engine)
         yield
+        engine.dispose()
 
     application = FastAPI(title="PAP API", version="0.2.0", lifespan=lifespan)
     application.state.settings = selected
+    application.state.db_engine = engine
+    application.state.db_session_factory = create_session_factory(engine)
     application.add_middleware(
         FlaskSessionMiddleware, secret_key=selected.secret_key, secure=selected.is_production
     )

@@ -1,13 +1,15 @@
 import hmac
-import sqlite3
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import Response
+from sqlalchemy import insert, select, update
+from sqlalchemy.orm import Session
 
 from app.api.customer import silent_json
 from app.api.dependencies import require_admin
 from app.db import get_db
+from app.models import order_items, orders, products, settings
 from app.responses import error_response
 from app.serializers import order_json
 from app.sessions import session_data
@@ -41,31 +43,31 @@ def admin_session(request: Request):
 
 
 @router.get("/admin/orders")
-def admin_orders(request: Request, db: sqlite3.Connection = Depends(get_db)):
+def admin_orders(request: Request, db: Session = Depends(get_db)):
     if denied := require_admin(request):
         return denied
-    orders = db.execute("SELECT * FROM orders ORDER BY created_at DESC").fetchall()
+    order_rows = db.execute(select(orders).order_by(orders.c.created_at.desc())).mappings().all()
     return [
         order_json(
             order,
-            db.execute("SELECT * FROM order_items WHERE order_id = ?", (order["id"],)).fetchall(),
+            db.execute(select(order_items).where(order_items.c.order_id == order["id"])).mappings().all(),
         )
-        for order in orders
+        for order in order_rows
     ]
 
 
 @router.post("/admin/migrate")
-async def migrate_legacy(request: Request, db: sqlite3.Connection = Depends(get_db)):
+async def migrate_legacy(request: Request, db: Session = Depends(get_db)):
     if denied := require_admin(request):
         return denied
     if request.app.state.settings.is_production:
         return error_response("Legacy migration is disabled in production", 403)
-    if db.execute("SELECT value FROM settings WHERE key = 'legacy_migrated'").fetchone():
+    if db.execute(select(settings.c.value).where(settings.c.key == "legacy_migrated")).first():
         return {"migrated": False, "reason": "already_migrated"}
-    products = (await silent_json(request)).get("products") or []
+    products_payload = (await silent_json(request)).get("products") or []
     now = utc_now()
     migrated = 0
-    for product in products:
+    for product in products_payload:
         if not product.get("name"):
             continue
         age = product.get("age") if product.get("age") in {"all", "young", "adult", "senior"} else "all"
@@ -77,25 +79,18 @@ async def migrate_legacy(request: Request, db: sqlite3.Connection = Depends(get_
             product.get("petType") if product.get("petType") in {"cat", "dog", "both"} else "both",
             age, image_url, product.get("emoji", "🐾"), 1 if product.get("featured") else 0, now, now,
         )
-        if product_id:
-            db.execute(
-                """INSERT INTO products
-                   (id,name,description,price,stock,category,pet_type,age_group,image_url,emoji,featured,created_at,updated_at)
-                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET
-                   name=excluded.name,description=excluded.description,price=excluded.price,
-                   stock=excluded.stock,category=excluded.category,pet_type=excluded.pet_type,
-                   age_group=excluded.age_group,image_url=excluded.image_url,emoji=excluded.emoji,
-                   featured=excluded.featured,updated_at=excluded.updated_at""",
-                (product_id, *values),
-            )
+        values = dict(zip(
+            ("name", "description", "price", "stock", "category", "pet_type", "age_group",
+             "image_url", "emoji", "featured", "created_at", "updated_at"),
+            values,
+        ))
+        if product_id and db.execute(select(products.c.id).where(products.c.id == product_id)).first():
+            db.execute(update(products).where(products.c.id == product_id).values(**values))
+        elif product_id:
+            db.execute(insert(products).values(id=product_id, **values))
         else:
-            db.execute(
-                """INSERT INTO products
-                   (name,description,price,stock,category,pet_type,age_group,image_url,emoji,featured,created_at,updated_at)
-                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?)""",
-                values,
-            )
+            db.execute(insert(products).values(**values))
         migrated += 1
-    db.execute("INSERT INTO settings (key,value) VALUES ('legacy_migrated',?)", (now,))
+    db.execute(insert(settings).values(key="legacy_migrated", value=now))
     db.commit()
     return {"migrated": True, "count": migrated}
