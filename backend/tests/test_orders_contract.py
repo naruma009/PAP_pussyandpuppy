@@ -32,6 +32,22 @@ def test_order_authoritative_total_and_history(client, settings, seed_product):
     assert client.get("/api/customer/orders").json()[0]["id"] == response.json()["id"]
 
 
+def test_real_customer_auth_transaction_is_reused_for_order_creation(client, settings, seed_product):
+    product_id = seed_product(stock=2)
+    assert client.post(
+        "/api/customer/register",
+        json={"name": "Real Buyer", "email": "real-buyer@example.com", "password": "correct horse battery"},
+    ).status_code == 200
+    # The authenticated-user dependency has already queried users and
+    # autobegun the Session transaction before the order handler runs.
+    response = client.post(
+        "/api/orders",
+        json={"items": [{"productId": product_id, "quantity": 1}], "shipping": shipping("real-buyer@example.com")},
+    )
+    assert response.status_code == 201
+    assert stock(settings, product_id) == 1
+
+
 def test_failed_cart_rolls_back_everything(client, settings, seed_product):
     first = seed_product(stock=3)
     second = seed_product(name="Sold Out", stock=0)

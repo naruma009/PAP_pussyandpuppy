@@ -1,7 +1,6 @@
 import time
 import uuid
 from collections import OrderedDict
-from contextlib import nullcontext
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, Request
@@ -50,50 +49,47 @@ async def create_order(request: Request, db: Session = Depends(get_db)):
         if db.bind.dialect.name == "sqlite":
             db.rollback()
             db.connection().exec_driver_sql("BEGIN IMMEDIATE")
-            transaction = nullcontext()
-        else:
-            transaction = db.begin()
-        with transaction:
-            quantities: OrderedDict[int, int] = OrderedDict()
-            for item in cart:
-                product_id = int(item.get("productId"))
-                quantity = int(item.get("quantity"))
-                if quantity <= 0:
-                    raise ValueError("Invalid quantity")
-                quantities[product_id] = quantities.get(product_id, 0) + quantity
-            validated = []
-            for product_id, quantity in quantities.items():
-                product = db.execute(
-                    select(products).where(products.c.id == product_id).with_for_update()
-                ).mappings().first()
-                if not product or product["stock"] < quantity:
-                    name = product["name"] if product else "a product"
-                    raise ValueError(f"Not enough stock for {name}")
-                validated.append((product, quantity))
-            order_id = f"PAP-{int(time.time() * 1000)}-{uuid.uuid4().hex[:6].upper()}"
-            total = sum(product["price"] * quantity for product, quantity in validated)
-            created_at = utc_now()
-            db.execute(insert(orders).values(
-                id=order_id, user_id=user_id, customer_name=shipping["fullName"], customer_email=shipping["email"],
-                phone=shipping["phone"], address=shipping["address"], district=shipping["district"],
-                province=shipping["province"], postal_code=shipping["postalCode"], total=total,
-                status="pending", payment_status="unpaid", currency="THB", created_at=created_at,
+        # SQLAlchemy 2.x autobegins a transaction for the authentication query
+        # above. Reuse that transaction rather than calling db.begin() again.
+        quantities: OrderedDict[int, int] = OrderedDict()
+        for item in cart:
+            product_id = int(item.get("productId"))
+            quantity = int(item.get("quantity"))
+            if quantity <= 0:
+                raise ValueError("Invalid quantity")
+            quantities[product_id] = quantities.get(product_id, 0) + quantity
+        validated = []
+        for product_id, quantity in quantities.items():
+            product = db.execute(
+                select(products).where(products.c.id == product_id).with_for_update()
+            ).mappings().first()
+            if not product or product["stock"] < quantity:
+                name = product["name"] if product else "a product"
+                raise ValueError(f"Not enough stock for {name}")
+            validated.append((product, quantity))
+        order_id = f"PAP-{int(time.time() * 1000)}-{uuid.uuid4().hex[:6].upper()}"
+        total = sum(product["price"] * quantity for product, quantity in validated)
+        created_at = utc_now()
+        db.execute(insert(orders).values(
+            id=order_id, user_id=user_id, customer_name=shipping["fullName"], customer_email=shipping["email"],
+            phone=shipping["phone"], address=shipping["address"], district=shipping["district"],
+            province=shipping["province"], postal_code=shipping["postalCode"], total=total,
+            status="pending", payment_status="unpaid", currency="THB", created_at=created_at,
+        ))
+        for product, quantity in validated:
+            subtotal = product["price"] * quantity
+            db.execute(insert(order_items).values(
+                order_id=order_id, product_id=product["id"], product_name=product["name"],
+                quantity=quantity, unit_price=product["price"], subtotal=subtotal,
             ))
-            for product, quantity in validated:
-                subtotal = product["price"] * quantity
-                db.execute(insert(order_items).values(
-                    order_id=order_id, product_id=product["id"], product_name=product["name"],
-                    quantity=quantity, unit_price=product["price"], subtotal=subtotal,
-                ))
-                result = db.execute(
-                    update(products)
-                    .where(products.c.id == product["id"], products.c.stock >= quantity)
-                    .values(stock=products.c.stock - quantity, updated_at=created_at)
-                )
-                if result.rowcount != 1:
-                    raise ValueError(f"Not enough stock for {product['name']}")
-        if db.bind.dialect.name == "sqlite":
-            db.commit()
+            result = db.execute(
+                update(products)
+                .where(products.c.id == product["id"], products.c.stock >= quantity)
+                .values(stock=products.c.stock - quantity, updated_at=created_at)
+            )
+            if result.rowcount != 1:
+                raise ValueError(f"Not enough stock for {product['name']}")
+        db.commit()
     except (ValueError, TypeError, KeyError) as error:
         db.rollback()
         return error_response(str(error), 409)
