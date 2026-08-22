@@ -75,11 +75,21 @@ orders = Table(
     Column("postal_code", Text, nullable=False),
     Column("total", Numeric(12, 2), nullable=False),
     Column("status", Text, nullable=False, server_default="pending"),
+    Column("payment_status", Text, nullable=False, server_default="unpaid"),
+    Column("payment_provider", Text, nullable=True),
+    Column("provider_payment_id", Text, nullable=True),
+    Column("checkout_session_id", Text, nullable=True),
+    Column("paid_at", AppTimestamp(), nullable=True),
+    Column("currency", String(3), nullable=False, server_default="THB"),
     Column("created_at", AppTimestamp(), nullable=False),
     CheckConstraint("total >= 0", name="ck_orders_total_nonnegative"),
     CheckConstraint(
         "status IN ('pending', 'processing', 'shipped', 'completed', 'cancelled')",
         name="ck_orders_status",
+    ),
+    CheckConstraint(
+        "payment_status IN ('unpaid', 'pending', 'paid', 'failed', 'refunded')",
+        name="ck_orders_payment_status",
     ),
 )
 

@@ -9,7 +9,7 @@ The current backend is under `backend/app/`. `main.py` creates the FastAPI app, 
 - Health: `/api/health`
 - Catalog: `GET /api/products`, `GET /api/products/{id}`
 - Customer: register, real email/password login, current-user/session/logout, `GET /api/customer/orders`, and identity-scoped `GET /api/customer/orders/{id}`; legacy name/email demo login remains temporarily compatible
-- Orders: `POST /api/orders` with customer guard, server-side stock/total validation, and transaction handling
+- Orders: `POST /api/orders` with customer guard, server-side stock/total validation, transaction handling, and canonical payment state (`unpaid` by default)
 - Admin: role-aware email/password login/session/logout, `GET /api/admin/orders`, `GET /api/admin/orders/{id}`, `PATCH /api/admin/orders/{id}/status`, and development-only `/api/admin/migrate`; every protected operation requires an active user with `role=admin`
 - Product management: admin-protected `POST /api/products`, `PUT /api/products/{id}`, `DELETE /api/products/{id}`
 
@@ -21,4 +21,4 @@ Root `app.py` is the Flask implementation of the same broad catalog, cart/order,
 
 ## Gaps before production
 
-The FastAPI persistence layer is now ported to SQLAlchemy, and PostgreSQL schema/data plus customer and admin authentication have been verified. Customer and admin passwords use Argon2id hashes and the existing secure session cookie stores only a user reference. Admin authorization uses the `users.role` value looked up server-side, and the interactive getpass-based bootstrap CLI has created the initial admin account. Order status lifecycle, cancellation stock restoration, and immutable customer/shipping/item snapshots are implemented; payment integration, production deployment, observability, and operational controls are not confirmed complete.
+The FastAPI persistence layer is now ported to SQLAlchemy, and PostgreSQL schema/data plus customer and admin authentication have been verified. Customer and admin passwords use Argon2id hashes and the existing secure session cookie stores only a user reference. Admin authorization uses the `users.role` value looked up server-side, and the interactive getpass-based bootstrap CLI has created the initial admin account. Order status lifecycle, cancellation stock restoration, immutable customer/shipping/item snapshots, and payment-state foundation are implemented. Stripe Checkout test-mode integration, production deployment, observability, and operational controls are not confirmed complete.

@@ -64,3 +64,10 @@ The legacy Flask app uses a separate SQLite file at `instance/pap.db` and root `
 
 - Alembic revision `m4a_order_status` canonicalizes existing `New` orders to `pending` and constrains order status to `pending`, `processing`, `shipped`, `completed`, or `cancelled`.
 - Cancellation restores each order item's stock in the same transaction as the status update; repeated cancellation is idempotent.
+
+## M5A payment foundation
+
+- Alembic revision `m5a_payment_foundation` adds `orders.payment_status`, `payment_provider`, nullable provider references, nullable `paid_at`, and three-letter `currency`.
+- Existing orders are safely backfilled by database defaults to `payment_status='unpaid'` and `currency='THB'`; existing order status, totals, items, users, and products are not rewritten.
+- Payment state is separate from fulfillment `orders.status`. Customer/admin serializers expose only safe payment status/provider/currency/timestamp fields; provider and checkout references remain internal and nullable.
+- Stripe Checkout is the planned M5B provider. M5A makes no Stripe calls and stores no Stripe credentials.

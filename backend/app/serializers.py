@@ -34,6 +34,10 @@ def order_json(order: Mapping, items: list[Mapping]) -> dict:
         "id": order["id"],
         "createdAt": json_time(order["created_at"]),
         "status": order["status"],
+        "paymentStatus": order["payment_status"],
+        "paymentProvider": order["payment_provider"],
+        "currency": order["currency"],
+        "paidAt": json_time(order["paid_at"]),
         "total": json_number(order["total"]),
         "customer": {
             "fullName": order["customer_name"],

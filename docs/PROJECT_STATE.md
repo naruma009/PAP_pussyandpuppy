@@ -85,3 +85,9 @@ Do not treat this document as evidence that the application is production-ready.
 - Existing order snapshot columns are reused; no Alembic revision was needed.
 - Customer and admin order detail responses/UI show shipping/customer snapshots, item quantities and prices, subtotals, totals, created time, and canonical status.
 - Customer order detail authorization is tied to the authenticated user identity. Existing users, products, orders, and order items are preserved.
+
+## M5A payment foundation
+
+- Alembic revision `m5a_payment_foundation` adds canonical payment state with `unpaid`, `pending`, `paid`, `failed`, and `refunded`; new orders default to `unpaid` and `THB`.
+- Payment status is independent from order fulfillment status and is read-only to customers/admins in M5A; no manual mark-paid endpoint exists.
+- A no-network provider boundary is ready for Stripe Checkout in M5B. No Stripe SDK, credentials, Checkout Session, webhook, or external call is present in M5A.
