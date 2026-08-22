@@ -41,7 +41,7 @@ Legacy implementation remains independently present and is not the current targe
 - PostgreSQL schema initialization and application connectivity are verified for the development `pal2paw` database; data migration and production deployment remain outstanding.
 - Customer authentication uses persistent users and Argon2id password hashes; React Register/Login/Logout, session restoration, checkout guard, and customer order guard are implemented. Verification/recovery/MFA, rate limiting, and account lifecycle controls remain TBD.
 - Admin backend authorization now uses real `users.role` identity lookup with Argon2id email/password login. Shared-code authentication has been removed; frontend admin cutover and initial bootstrap are complete. Audit trail and secret rotation remain incomplete.
-- Checkout has no payment provider or payment state workflow in the inspected code.
+- Checkout has Stripe Checkout sandbox integration and payment state workflow; public deployment and production Stripe verification remain outstanding.
 - Admin order management now supports server-side status transitions and transactional cancellation stock restoration; fulfillment automation and auditability remain TBD.
 - React admin order controls and customer order status labels are implemented for the canonical lifecycle; payment/fulfillment automation remains TBD.
 - Deployment to a persistent public frontend/backend/database is not verified. Exact hosting, HTTPS, domain, backups, observability, and scaling plan are TBD.
@@ -98,3 +98,10 @@ Do not treat this document as evidence that the application is production-ready.
 - Signed webhook handling supports completed and async success/failure events, validates metadata/session identity/amount/currency, and is idempotent.
 - React checkout/order history includes guarded payment initiation plus minimal success/cancel pages. Browser redirects are not payment authority.
 - External Stripe test-mode verification, Stripe credentials, and real payment remain NOT DONE.
+
+## M6A deployment readiness
+
+- A production topology plan is documented in `docs/tasks/M6A_DEPLOYMENT_PLAN.md`.
+- Recommended topology is backend plus private PostgreSQL on the same shared VM behind a public HTTPS reverse proxy; VM-owner permission is required before any deployment or server change.
+- Current SSH tunnel is development-only. Public HTTPS, process supervision, readiness checks, persistent upload storage, secret management, and deployment acceptance remain outstanding.
+- No production/server/database/network/Stripe-live change was made in M6A.
