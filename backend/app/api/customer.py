@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import Response
-from sqlalchemy import or_, select
+from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -154,8 +154,10 @@ def customer_orders(request: Request, db: Session = Depends(get_db)):
         user = db.execute(select(users).where(users.c.id == user_id)).mappings().first()
         if not user:
             return error_response("Customer login required", 401)
-        email = user["email"]
-        predicate = or_(orders.c.user_id == user_id, orders.c.customer_email.ilike(email))
+        # Real customer sessions are scoped to the immutable user identity.  Do
+        # not widen this to an email match: email is an order snapshot, not an
+        # authorization key.
+        predicate = orders.c.user_id == user_id
     else:
         email = session["customer"]["email"]
         predicate = orders.c.customer_email.ilike(email)
@@ -167,3 +169,20 @@ def customer_orders(request: Request, db: Session = Depends(get_db)):
         )
         for order in order_rows
     ]
+
+
+@router.get("/customer/orders/{order_id}")
+def customer_order_detail(order_id: str, request: Request, db: Session = Depends(get_db)):
+    if denied := require_customer(request, db):
+        return denied
+    session = session_data(request)
+    user_id = session.get("customer_user_id")
+    if user_id:
+        predicate = (orders.c.id == order_id) & (orders.c.user_id == user_id)
+    else:
+        predicate = (orders.c.id == order_id) & orders.c.customer_email.ilike(session["customer"]["email"])
+    order = db.execute(select(orders).where(predicate)).mappings().first()
+    if not order:
+        return error_response("Order not found", 404)
+    items = db.execute(select(order_items).where(order_items.c.order_id == order_id)).mappings().all()
+    return order_json(order, items)

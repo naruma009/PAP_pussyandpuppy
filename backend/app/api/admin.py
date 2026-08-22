@@ -70,6 +70,17 @@ def admin_orders(request: Request, db: Session = Depends(get_db)):
     ]
 
 
+@router.get("/admin/orders/{order_id}")
+def admin_order_detail(order_id: str, request: Request, db: Session = Depends(get_db)):
+    if denied := require_admin(request, db):
+        return denied
+    order = db.execute(select(orders).where(orders.c.id == order_id)).mappings().first()
+    if not order:
+        return error_response("Order not found", 404)
+    items = db.execute(select(order_items).where(order_items.c.order_id == order_id)).mappings().all()
+    return order_json(order, items)
+
+
 @router.patch("/admin/orders/{order_id}/status")
 async def update_order_status(order_id: str, request: Request, db: Session = Depends(get_db)):
     if denied := require_admin(request, db):

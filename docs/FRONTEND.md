@@ -20,7 +20,7 @@ Customer storefront coverage exists for catalog, detail, cart, real Register/Log
 
 Admin UI coverage exists for real email/password login/session restore/logout, product create/update/delete, stock fields, uploads, order listing, and canonical order status management. Admin status controls call the role-protected backend endpoint and do not offer transitions from terminal orders. The React admin UI no longer calls the deprecated shared-code endpoint.
 
-Customer order history displays translated canonical statuses (`pending`, `processing`, `shipped`, `completed`, and `cancelled`) without exposing mutation controls. Backend responses remain authoritative after status updates and failures.
+Customer order history displays translated canonical statuses (`pending`, `processing`, `shipped`, `completed`, and `cancelled`) without exposing mutation controls. Each order renders its customer/shipping snapshot, item quantity/unit price/subtotal, and authoritative total. Admin order cards render the same snapshot details and reuse the M4B status controls. Missing legacy optional snapshot fields are handled without crashing.
 
 ## Legacy frontend
 

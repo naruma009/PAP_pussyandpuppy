@@ -53,12 +53,20 @@ export async function getCustomerOrders(signal) {
   return apiRequest("/customer/orders", { signal });
 }
 
+export async function getCustomerOrder(id, signal) {
+  return apiRequest(`/customer/orders/${encodeURIComponent(id)}`, { signal, expectedStatus: 200 });
+}
+
 export async function getAdminSession(signal) {
   return apiRequest("/admin/session", { signal, expectedStatus: 200 });
 }
 
 export async function getAdminOrders(signal) {
   return apiRequest("/admin/orders", { signal, expectedStatus: 200 });
+}
+
+export async function getAdminOrder(id, signal) {
+  return apiRequest(`/admin/orders/${encodeURIComponent(id)}`, { signal, expectedStatus: 200 });
 }
 
 export async function updateAdminOrderStatus(id, status, signal) {

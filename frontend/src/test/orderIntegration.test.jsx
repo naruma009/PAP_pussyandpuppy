@@ -238,3 +238,25 @@ it("renders canonical customer order status without mutation controls", async ()
   expect(await screen.findByText("Processing")).toBeInTheDocument();
   expect(screen.queryByRole("combobox", { name: /Change status/ })).not.toBeInTheDocument();
 });
+
+it("renders customer order snapshot details and tolerates missing legacy fields", async () => {
+  localStorage.setItem("pap-language", "en"); localStorage.setItem("pap-mode", "cat");
+  const fetchMock = vi.fn(async (url) => {
+    const endpoint = String(url);
+    if (endpoint.endsWith("/products")) return Response.json(products);
+    if (endpoint.endsWith("/customer/session")) return Response.json({ customer });
+    if (endpoint.endsWith("/customer/orders")) return Response.json([
+      { id: "PAP-DETAIL", createdAt: "2026-01-02T00:00:00Z", status: "shipped", total: 251, customer: { fullName: "Buyer", email: customer.email, address: "1 Road", district: "District", province: "Bangkok", postalCode: "10000" }, items: [{ productId: 1, name: "Cat Dinner", qty: 2, price: 125.5, subtotal: 251 }],
+      },
+      { id: "PAP-LEGACY", createdAt: "2026-01-01T00:00:00Z", status: "pending", total: 0 },
+    ]);
+    throw new Error(`Unexpected API call: ${endpoint}`);
+  });
+  mount("/account/orders", fetchMock);
+  const detail = await screen.findByText("PAP-DETAIL");
+  expect(detail.closest("article")).toHaveTextContent("Shipping address");
+  expect(detail.closest("article")).toHaveTextContent("Cat Dinner × 2");
+  expect(detail.closest("article")).toHaveTextContent("฿251");
+  expect(screen.getByText("PAP-LEGACY")).toBeInTheDocument();
+  expect(screen.getByText("Shipping details unavailable")).toBeInTheDocument();
+});

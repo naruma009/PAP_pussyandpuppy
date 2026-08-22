@@ -40,6 +40,7 @@ it("renders server order sequence, semantic details, authoritative total, Englis
   expect(articles).toHaveLength(2); expect(articles[0]).toHaveTextContent("PAP-NEW"); expect(articles[1]).toHaveTextContent("PAP-OLD");
   expect(articles[0]).toHaveTextContent("Newest Buyer"); expect(articles[0]).toHaveTextContent("0811111111"); expect(articles[0]).toHaveTextContent("new@example.com");
   expect(articles[0]).toHaveTextContent("1 Road, Area, Bangkok, 10000"); expect(articles[0]).toHaveTextContent("Bed × 2"); expect(articles[0]).toHaveTextContent("฿999"); expect(articles[0]).toHaveTextContent("Pending");
+  expect(articles[0]).toHaveTextContent("Unit price: ฿10"); expect(articles[0]).toHaveTextContent("Subtotal: ฿20");
   expect(articles[0].querySelector("time")).toHaveAttribute("datetime", newest.createdAt); expect(articles[0].querySelector("address")).toBeInTheDocument(); expect(articles[0].querySelector("ul")).toBeInTheDocument();
   expect(document.documentElement).toHaveAttribute("data-theme", "dark");
 });

@@ -79,3 +79,9 @@ Do not treat this document as evidence that the application is production-ready.
 
 - React admin order cards display current status, offer only lifecycle-valid next statuses, refresh from the server response, and show errors without optimistic state changes.
 - React customer order history displays translated status labels and never exposes status mutation controls.
+
+## M4C production order details
+
+- Existing order snapshot columns are reused; no Alembic revision was needed.
+- Customer and admin order detail responses/UI show shipping/customer snapshots, item quantities and prices, subtotals, totals, created time, and canonical status.
+- Customer order detail authorization is tied to the authenticated user identity. Existing users, products, orders, and order items are preserved.

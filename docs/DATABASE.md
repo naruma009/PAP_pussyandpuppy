@@ -47,6 +47,12 @@ The legacy Flask app uses a separate SQLite file at `instance/pap.db` and root `
 - PostgreSQL application connectivity and temporary-data product/order/stock smoke tests passed through `localhost:5434`.
 - SQLite/local demo data migration has not started, and no account/auth data was created.
 
+## M4C order detail snapshots
+
+- No new migration was required: the applied `orders` and `order_items` schema already stores customer/shipping, product-name, unit-price, quantity, subtotal, total, status, and creation-time snapshots.
+- New checkout writes these snapshot fields from server-validated customer/shipping/product data. Later product/profile changes do not rewrite existing orders.
+- Customer detail reads are scoped by authenticated `users.id`; admin detail reads require the server-side admin role. Existing PostgreSQL data and the migrated order remain unchanged.
+
 ## M2E demo data migration status
 
 - Confirmed source: `backend/data/admin-smoke.db`; the legacy `instance/pap.db` was not included.
