@@ -43,7 +43,7 @@ def create_app(
         yield
         engine.dispose()
 
-    application = FastAPI(title="PAP API", version="0.2.0", lifespan=lifespan)
+    application = FastAPI(title="pal2paw API", version="0.2.0", lifespan=lifespan)
     application.state.settings = selected
     application.state.db_engine = engine
     application.state.db_session_factory = create_session_factory(engine)

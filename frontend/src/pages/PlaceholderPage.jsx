@@ -6,7 +6,7 @@ export default function PlaceholderPage({ page }) {
   useEffect(() => { document.title = `${page} — pal2paw`; }, [page]);
   return (
     <section className="foundation-placeholder container" aria-label={`${page} placeholder`}>
-      <p className="eyebrow">M3A Foundation</p>
+      <p className="eyebrow">pal2paw</p>
       <h1>{page}</h1>
       <p>{t("foundation")}</p>
     </section>

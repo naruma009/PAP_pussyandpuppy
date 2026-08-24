@@ -120,3 +120,9 @@ Do not treat this document as evidence that the application is production-ready.
 - Frontend full regression passed 40 files and 218 tests using serialized Vitest workers; production build passed. The earlier 120-second timeout/EPIPE was runner termination caused by jsdom startup cost, not an application failure.
 - Temporary PostgreSQL smoke rows were verified absent after cleanup; the existing admin, products, and orders remained present. No schema migration or pre-existing data deletion was performed.
 - PUBLIC DEPLOYMENT NOT YET DONE. VM, reverse proxy, HTTPS, public DNS, firewall/network, and Stripe live mode remain outside this local verification.
+
+## M6C2 pre-deploy storefront cleanup
+
+- Pre-deploy UI cleanup is complete for the current React/FastAPI flow: normal storefront/admin copy uses `pal2paw`, stale M3A/Demo wording is removed, and the existing Admin Login remains email/password-only.
+- Missing upload reference `/uploads/products/legacy-32f1644b9aa643edb299ed79e9d74477.jpg` belongs to product `อาหารแมวรสโจรสลัด` (id `1786820130468`). The source file is absent; no database reference was changed. Storefront and admin image views now fall back to the product emoji without a broken-image icon. The product can receive a replacement image through Admin.
+- Targeted cleanup tests passed; backend regression passed 55 tests, frontend regression passed 43 files / 221 tests, and the production build passed. No users/products/orders/payment state/schema were modified.

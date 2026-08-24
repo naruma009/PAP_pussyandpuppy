@@ -14,6 +14,7 @@ it("keeps upload URLs and retries a changed product image", () => {
   expect(image).toHaveAttribute("src", "/uploads/products/dinner.png");
   fireEvent.error(image);
   expect(screen.queryByRole("img", { name: "Dinner" })).not.toBeInTheDocument();
+  expect(container.querySelector(".product-visual span")).toBeInTheDocument();
   const next = { ...product, id: 8, name: "Breakfast", image: "/uploads/products/breakfast.png" };
   rerender(<MemoryRouter><ProductCard product={next} /></MemoryRouter>);
   expect(screen.getByRole("img", { name: "Breakfast" })).toHaveAttribute("src", "/uploads/products/breakfast.png");
