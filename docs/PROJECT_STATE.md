@@ -112,3 +112,11 @@ Do not treat this document as evidence that the application is production-ready.
 - `/api/health` is liveness; `/api/ready` verifies database usability without exposing diagnostics. Production app import disables startup schema initialization; Alembic remains an explicit single release step.
 - Explicit unknown origins are rejected for cookie-authenticated state changes, with Stripe raw-body signature verification preserved. Configured upload directories are resolved and created safely without migrating or deleting existing files.
 - Local production hardening is ready. VM, reverse proxy, HTTPS, public DNS, persistent VM storage, and public deployment are NOT DEPLOYED.
+
+## M6C1 final local end-to-end verification
+
+- LOCAL E2E VERIFIED: frontend localhost returned 200; FastAPI `/api/health` and `/api/ready` returned 200; configured PostgreSQL readiness passed against `pal2paw`/`prem` through the local tunnel.
+- Existing backend regression passed 55 tests including the two opt-in PostgreSQL smoke tests with temporary-row cleanup. Customer/admin authorization, catalog/order/status/cancellation, Stripe signature protection, cookie/CORS/origin hardening, and upload contracts are covered by the completed test suite.
+- Frontend full regression passed 40 files and 218 tests using serialized Vitest workers; production build passed. The earlier 120-second timeout/EPIPE was runner termination caused by jsdom startup cost, not an application failure.
+- Temporary PostgreSQL smoke rows were verified absent after cleanup; the existing admin, products, and orders remained present. No schema migration or pre-existing data deletion was performed.
+- PUBLIC DEPLOYMENT NOT YET DONE. VM, reverse proxy, HTTPS, public DNS, firewall/network, and Stripe live mode remain outside this local verification.
