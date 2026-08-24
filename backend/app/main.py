@@ -3,6 +3,7 @@ from pathlib import Path
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
+from starlette.middleware.cors import CORSMiddleware
 from starlette.staticfiles import StaticFiles
 
 from app.api.admin import router as admin_router
@@ -25,6 +26,9 @@ def create_app(
     selected = settings or get_settings()
     project_root = Path(__file__).resolve().parents[2]
     selected.validate_runtime(project_root)
+    selected.upload_dir = selected.upload_dir.expanduser().resolve()
+    if selected.upload_dir.exists() and not selected.upload_dir.is_dir():
+        raise RuntimeError("PAP_API_UPLOAD_DIR must be a directory")
     engine = create_database_engine(selected)
     if initialize:
         selected.upload_dir.mkdir(parents=True, exist_ok=True)
@@ -45,11 +49,31 @@ def create_app(
     application.state.db_session_factory = create_session_factory(engine)
     application.state.payment_provider = StripeCheckoutProvider(selected.stripe_secret_key)
     application.add_middleware(
-        FlaskSessionMiddleware, secret_key=selected.secret_key, secure=selected.is_production
+        FlaskSessionMiddleware,
+        secret_key=selected.secret_key,
+        secure=selected.is_production,
+        samesite=selected.cookie_samesite,
+        domain=selected.cookie_domain,
     )
+    if selected.allowed_origins:
+        application.add_middleware(
+            CORSMiddleware,
+            allow_origins=list(selected.allowed_origins),
+            allow_credentials=True,
+            allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+            allow_headers=["Content-Type", "Stripe-Signature"],
+        )
 
     @application.middleware("http")
     async def legacy_headers_and_size(request: Request, call_next):
+        if (
+            request.method in {"POST", "PUT", "PATCH", "DELETE"}
+            and request.url.path.startswith("/api/")
+            and request.url.path != "/api/payments/stripe/webhook"
+        ):
+            origin = request.headers.get("origin")
+            if origin and origin.rstrip("/") not in selected.allowed_origins:
+                return JSONResponse({"error": "Origin is not allowed"}, status_code=403)
         content_length = request.headers.get("content-length")
         if content_length and int(content_length) > selected.max_content_length:
             response = JSONResponse({"error": "Upload is too large"}, status_code=413)
@@ -72,4 +96,4 @@ def create_app(
     return application
 
 
-app = create_app(initialize_on_startup=True)
+app = create_app(initialize_on_startup=not get_settings().is_production)

@@ -18,6 +18,10 @@ class Settings(BaseSettings):
     database_path: Path = BACKEND_DIR / "data" / "pap-dev.db"
     upload_dir: Path = BACKEND_DIR / "data" / "uploads" / "products"
     secret_key: str = "pap-development-secret-change-me"
+    public_origin: str | None = None
+    cors_allowed_origins: str = ""
+    cookie_samesite: str = "lax"
+    cookie_domain: str | None = None
     stripe_secret_key: str | None = Field(
         default=None,
         validation_alias=AliasChoices("STRIPE_SECRET_KEY", "PAP_API_STRIPE_SECRET_KEY"),
@@ -47,6 +51,15 @@ class Settings(BaseSettings):
     def is_production(self) -> bool:
         return self.env.lower() == "production"
 
+    @property
+    def allowed_origins(self) -> tuple[str, ...]:
+        configured = [origin.strip().rstrip("/") for origin in self.cors_allowed_origins.split(",")]
+        if self.public_origin:
+            configured.append(self.public_origin.strip().rstrip("/"))
+        if not self.is_production:
+            configured.extend(("http://localhost:5173", "http://127.0.0.1:5173"))
+        return tuple(dict.fromkeys(origin for origin in configured if origin))
+
     def validate_runtime(self, project_root: Path) -> None:
         legacy_database = (project_root / "instance" / "pap.db").resolve()
         legacy_uploads = (project_root / "uploads" / "products").resolve()
@@ -54,6 +67,12 @@ class Settings(BaseSettings):
             raise RuntimeError("FastAPI must not use the legacy instance/pap.db")
         if self.upload_dir.resolve() == legacy_uploads:
             raise RuntimeError("FastAPI must not use the legacy uploads directory")
+        if self.cookie_samesite.lower() not in {"lax", "strict", "none"}:
+            raise RuntimeError("PAP_API_COOKIE_SAMESITE must be lax, strict, or none")
+        if self.cookie_samesite.lower() == "none" and not self.is_production:
+            raise RuntimeError("SameSite=None requires production HTTPS")
+        if "*" in self.allowed_origins:
+            raise RuntimeError("CORS origins must not use wildcard with credentials")
         if self.is_production:
             if not self.secret_key or self.secret_key == "pap-development-secret-change-me":
                 raise RuntimeError("PAP_API_SECRET_KEY is required in production")

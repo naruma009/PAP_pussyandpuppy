@@ -6,7 +6,7 @@ The current backend is under `backend/app/`. `main.py` creates the FastAPI app, 
 
 ## API groups
 
-- Health: `/api/health`
+- Health: `/api/health` is liveness only; `/api/ready` checks that the configured database is usable and returns 503 without internal diagnostics when it is not.
 - Catalog: `GET /api/products`, `GET /api/products/{id}`
 - Customer: register, real email/password login, current-user/session/logout, `GET /api/customer/orders`, and identity-scoped `GET /api/customer/orders/{id}`; legacy name/email demo login remains temporarily compatible
 - Orders: `POST /api/orders` with customer guard, server-side stock/total validation, transaction handling, canonical payment state (`unpaid` by default), customer-owned `POST /api/customer/orders/{id}/checkout-session`, and signed `POST /api/payments/stripe/webhook`
@@ -14,6 +14,10 @@ The current backend is under `backend/app/`. `main.py` creates the FastAPI app, 
 - Product management: admin-protected `POST /api/products`, `PUT /api/products/{id}`, `DELETE /api/products/{id}`
 
 Uploads are handled by FastAPI under the configured non-legacy upload directory. API responses use an `error` field for the tested error contract.
+
+Production configuration is environment-driven: `PAP_API_ENV`, `PAP_API_HOST`, `PAP_API_PORT`, `DATABASE_URL`, `PAP_API_SECRET_KEY`, `PAP_API_PUBLIC_ORIGIN`, `PAP_API_CORS_ALLOWED_ORIGINS`, `PAP_API_UPLOAD_DIR`, cookie settings, and Stripe settings. `backend/.env.example` contains names and safe placeholders only. Production startup does not run database initialization; run the approved migration release step once, then start the backend from `backend/` with `python -m uvicorn app.main:app --host ${PAP_API_HOST} --port ${PAP_API_PORT}` (PowerShell: `python -m uvicorn app.main:app --host $env:PAP_API_HOST --port $env:PAP_API_PORT`), with no `--reload` and one process-supervised instance per release.
+
+State-changing cookie-authenticated API requests reject an explicit unknown `Origin`; the Stripe webhook is exempt from this origin check and continues to verify its raw request body with `Stripe-Signature`.
 
 ## Legacy backend
 

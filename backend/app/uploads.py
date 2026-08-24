@@ -23,7 +23,7 @@ async def save_upload(upload: UploadFile | None, upload_dir: Path) -> str:
 
 def delete_upload(image_url: str, upload_dir: Path) -> None:
     if image_url and image_url.startswith(UPLOAD_URL_PREFIX):
-        path = upload_dir / Path(image_url).name
+        path = upload_dir.resolve() / Path(image_url).name
         if path.is_file():
             try:
                 path.unlink()

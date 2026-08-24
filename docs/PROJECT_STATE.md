@@ -105,3 +105,10 @@ Do not treat this document as evidence that the application is production-ready.
 - Recommended topology is backend plus private PostgreSQL on the same shared VM behind a public HTTPS reverse proxy; VM-owner permission is required before any deployment or server change.
 - Current SSH tunnel is development-only. Public HTTPS, process supervision, readiness checks, persistent upload storage, secret management, and deployment acceptance remain outstanding.
 - No production/server/database/network/Stripe-live change was made in M6A.
+
+## M6B1 local production hardening
+
+- Production configuration is environment-driven for runtime mode, session secret/cookie policy, database URL, public/CORS origins, upload directory, and Stripe URLs/secrets. No production domain or active secret is hardcoded.
+- `/api/health` is liveness; `/api/ready` verifies database usability without exposing diagnostics. Production app import disables startup schema initialization; Alembic remains an explicit single release step.
+- Explicit unknown origins are rejected for cookie-authenticated state changes, with Stripe raw-body signature verification preserved. Configured upload directories are resolved and created safely without migrating or deleting existing files.
+- Local production hardening is ready. VM, reverse proxy, HTTPS, public DNS, persistent VM storage, and public deployment are NOT DEPLOYED.

@@ -1,4 +1,5 @@
 const apiBase = (import.meta.env.VITE_API_BASE_URL || "/api").replace(/\/$/, "");
+const apiCredentials = apiBase.startsWith("/") ? "same-origin" : "include";
 
 export class ApiError extends Error {
   constructor(message, status) {
@@ -11,7 +12,7 @@ export class ApiError extends Error {
 export async function apiRequest(path, options = {}) {
   const { expectedStatus, ...fetchOptions } = options;
   const response = await fetch(`${apiBase}${path}`, {
-    credentials: "same-origin",
+    credentials: apiCredentials,
     ...fetchOptions,
   });
   const unexpectedStatus = expectedStatus !== undefined && response.status !== expectedStatus;

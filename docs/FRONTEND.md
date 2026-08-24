@@ -28,4 +28,4 @@ Root `*.html`, `css/`, and `js/` are the legacy Vanilla implementation. Do not a
 
 ## Production gaps
 
-Production serving/build output, API origin configuration, HTTPS/cookie behavior, error monitoring, accessibility/performance acceptance, and full end-to-end browser verification are not established by repository inspection alone. Admin identity/role migration also remains TBD.
+Production serving/build output and full end-to-end browser verification are not established by repository inspection alone. API requests use `VITE_API_BASE_URL` (default `/api`); same-origin builds use same-origin cookies and an explicitly configured cross-origin API uses credentialed requests. `VITE_DEV_API_TARGET` remains Vite-proxy-only for localhost development. Frontend variables must never contain backend or Stripe secrets. Admin identity/role migration also remains TBD.

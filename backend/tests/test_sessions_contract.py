@@ -41,3 +41,15 @@ def test_cookie_security_attributes(client):
     assert "httponly" in cookie
     assert "samesite=lax" in cookie
     assert "secure" not in cookie
+
+
+def test_production_cookie_is_secure(tmp_path):
+    from fastapi.testclient import TestClient
+    from app.config import Settings
+    from app.main import create_app
+
+    settings = Settings(_env_file=None, env="production", database_path=tmp_path / "db.sqlite",
+                        upload_dir=tmp_path / "uploads", secret_key="production-test-secret")
+    with TestClient(create_app(settings, initialize=True), base_url="https://testserver") as client:
+        response = client.post("/api/customer/login", json={"name": "A", "email": "a@example.com"})
+    assert "secure" in response.headers["set-cookie"].lower()

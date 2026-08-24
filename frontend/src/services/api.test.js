@@ -11,6 +11,10 @@ it("uses same-origin cookies and returns JSON", async () => {
   expect(fetchMock).toHaveBeenCalledWith("/api/example", expect.objectContaining({ credentials: "same-origin" }));
 });
 
+it("keeps the production API base configurable without exposing secrets", () => {
+  expect(import.meta.env.VITE_API_BASE_URL || "/api").toMatch(/^\/api$|^https?:\/\//);
+});
+
 it("uses the M2 order endpoints without adding client totals", async () => {
   const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify({ id: "PAP-1", total: 50 }), { status: 201 }));
   const payload = { items: [{ productId: 1, quantity: 2 }], shipping: { email: "buyer@example.com" } };

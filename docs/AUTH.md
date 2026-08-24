@@ -5,10 +5,11 @@
 - Real customer endpoints: `POST /api/customer/register`, `POST /api/customer/login` with email/password, `GET /api/customer/me`, and `POST /api/customer/logout`.
 - Customer accounts use the `users` table and Argon2id password hashes. The password hash is never returned by the API or stored in the session.
 - The session stores only the authenticated user ID in the existing HttpOnly, SameSite=Lax cookie; Secure is enabled for production settings.
+- Cookie security is environment-driven: production sets HttpOnly and Secure, with SameSite (default `lax`) and optional domain from configuration. Localhost development remains non-Secure.
 - `GET /api/customer/session` remains available for the current frontend contract, and the legacy name/email demo login remains temporarily compatible for backend compatibility/tests; the normal React customer UI no longer uses it.
 - Customer-protected endpoints include order creation and customer order history.
 - Self-registration accepts customer fields only; role/admin fields are ignored and cannot grant admin access.
-- React now provides real Register/Login/Logout UI, restores the session on app load, and uses the authenticated session for checkout and customer orders. Email verification, recovery, MFA, CSRF strategy, rate limiting, and account lifecycle controls remain outstanding.
+- React now provides real Register/Login/Logout UI, restores the session on app load, and uses the authenticated session for checkout and customer orders. State-changing API requests reject explicit unknown origins; Stripe webhook requests remain signature-authenticated and exempt from the origin check. Email verification, recovery, MFA, rate limiting, and account lifecycle controls remain outstanding.
 
 ## Admin
 

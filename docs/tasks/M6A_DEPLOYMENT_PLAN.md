@@ -97,6 +97,8 @@ Optional or development-only:
 - `VITE_API_BASE_URL` — normally `/api` for same-origin production build.
 - `VITE_DEV_API_TARGET` — local Vite proxy only; never a production secret or database setting.
 
+M6B1 local hardening adds `PAP_API_PUBLIC_ORIGIN`, comma-separated `PAP_API_CORS_ALLOWED_ORIGINS`, `PAP_API_COOKIE_SAMESITE`, and optional `PAP_API_COOKIE_DOMAIN`. Use the exact backend start command from `docs/BACKEND.md` without `--reload`; run `alembic upgrade head` once as an explicit release step before starting the process. The application does not initialize a production schema at import/startup.
+
 Never expose any `STRIPE_*`, `DATABASE_URL`, or `PAP_API_SECRET_KEY` value to Vite/browser code.
 
 ## Security readiness
@@ -117,6 +119,8 @@ Blocking verification/work before public release:
 - Confirm Uvicorn/Gunicorn production process settings with reload/debug disabled.
 - Confirm public Stripe test webhook delivery, then separately approve any future live-mode change.
 
+M6B1 status: local production hardening is ready, but VM/reverse proxy/HTTPS/public DNS are NOT DEPLOYED. No VM, firewall, network, database schema/data, or Stripe live-mode change was made.
+
 ## Release sequence
 
 1. Obtain VM owner permission and choose the reverse proxy/process supervisor.
@@ -128,4 +132,3 @@ Blocking verification/work before public release:
 7. Start the backend without reload/debug, then verify `/api/health`, catalog, login/session cookies, uploads, and customer/admin authorization.
 8. Configure Stripe test webhook/public URLs and run the already-tested sandbox flow.
 9. Only after acceptance, define a separate production Stripe approval/change process.
-

@@ -37,10 +37,12 @@ class FlaskSessionCodec:
 
 
 class FlaskSessionMiddleware(BaseHTTPMiddleware):
-    def __init__(self, app, secret_key: str, secure: bool) -> None:
+    def __init__(self, app, secret_key: str, secure: bool, samesite: str = "lax", domain: str | None = None) -> None:
         super().__init__(app)
         self.codec = FlaskSessionCodec(secret_key)
         self.secure = secure
+        self.samesite = samesite
+        self.domain = domain
 
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
         original = self.codec.loads(request.cookies.get("session", ""))
@@ -57,12 +59,14 @@ class FlaskSessionMiddleware(BaseHTTPMiddleware):
                     self.codec.dumps(current),
                     httponly=True,
                     secure=self.secure,
-                    samesite="lax",
+                    samesite=self.samesite,
+                    domain=self.domain,
                     path="/",
                 )
             else:
                 response.delete_cookie(
-                    "session", httponly=True, secure=self.secure, samesite="lax", path="/"
+                    "session", httponly=True, secure=self.secure, samesite=self.samesite,
+                    domain=self.domain, path="/"
                 )
         return response
 
