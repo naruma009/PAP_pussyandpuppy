@@ -9,10 +9,11 @@
   ],
   "routes": [
     { "src": "/api/(.*)", "dest": "api/index.py" },
+    { "src": "/assets/(.*)", "dest": "/frontend/assets/$1" },
     {
       "src": "/(.*\\.(js|mjs|css|map|svg|png|jpg|jpeg|webp|gif|ico|json|txt|woff|woff2))",
-      "dest": "/$1"
+      "dest": "/frontend/$1"
     },
-    { "src": "/(.*)", "dest": "/index.html" }
+    { "src": "/(.*)", "dest": "/frontend/index.html" }
   ]
 }
