@@ -1,3 +1,5 @@
+<!-- MANUAL SYNC REQUIRED: Keep this file synchronized with AGENTS.md. -->
+
 # pal2paw AI project map
 
 Read only the documentation relevant to the task; do not scan the whole repository unless the task requires it.
