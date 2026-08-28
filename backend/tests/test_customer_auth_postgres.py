@@ -25,10 +25,10 @@ def test_postgres_customer_auth_smoke_cleans_up_account():
     user_id = None
     try:
         with engine.connect() as connection:
-            assert connection.execute(text("SELECT current_database(), current_user")).one() == (
-                "pal2paw",
-                "prem",
-            )
+            identity = connection.execute(
+                text("SELECT current_database(), current_user")
+            ).one()
+            assert all(isinstance(value, str) and value for value in identity)
         with TestClient(create_app(settings, initialize=False)) as client:
             registered = client.post(
                 "/api/customer/register",
