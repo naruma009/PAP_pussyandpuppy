@@ -38,7 +38,7 @@ async def product_payload(request: Request, existing: Mapping | None = None) -> 
         raise ValueError("Price and stock cannot be negative")
     old_url = existing["image_url"] if existing else ""
     upload = form.get("image")
-    new_url = await save_upload(upload if isinstance(upload, UploadFile) else None, request.app.state.settings.upload_dir)
+    new_url = await save_upload(upload if isinstance(upload, UploadFile) else None, request.app.state.settings)
     return {
         "name": str(form["name"]).strip(),
         "description": str(form["description"]).strip(),
@@ -82,7 +82,7 @@ async def create_product(request: Request, db: Session = Depends(get_db)):
             result = db.execute(insert(products).values(**data, created_at=now, updated_at=now))
             product_id = result.inserted_primary_key[0]
     except (ValueError, TypeError) as error:
-        delete_upload(new_url, request.app.state.settings.upload_dir)
+        delete_upload(new_url, request.app.state.settings)
         return error_response(str(error), 400)
     row = db.execute(select(products).where(products.c.id == product_id)).mappings().one()
     from fastapi.responses import JSONResponse
@@ -107,10 +107,10 @@ async def update_product(product_id: str, request: Request, db: Session = Depend
         with db.begin():
             db.execute(update(products).where(products.c.id == parsed_id).values(**data, updated_at=utc_now()))
     except (ValueError, TypeError) as error:
-        delete_upload(new_url, request.app.state.settings.upload_dir)
+        delete_upload(new_url, request.app.state.settings)
         return error_response(str(error), 400)
     if new_url:
-        delete_upload(existing["image_url"], request.app.state.settings.upload_dir)
+        delete_upload(existing["image_url"], request.app.state.settings)
     row = db.execute(select(products).where(products.c.id == parsed_id)).mappings().one()
     return product_json(row)
 
@@ -129,5 +129,5 @@ def delete_product(product_id: str, request: Request, db: Session = Depends(get_
     db.rollback()
     with db.begin():
         db.execute(delete(products).where(products.c.id == parsed_id))
-    delete_upload(row["image_url"], request.app.state.settings.upload_dir)
+    delete_upload(row["image_url"], request.app.state.settings)
     return Response(status_code=204)

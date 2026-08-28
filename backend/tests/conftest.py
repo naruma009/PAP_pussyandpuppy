@@ -17,6 +17,8 @@ def settings(tmp_path: Path) -> Settings:
         database_path=tmp_path / "pap-test.db",
         upload_dir=tmp_path / "uploads" / "products",
         secret_key="test-secret",
+        supabase_url="https://project.supabase.co",
+        supabase_secret_key="sb_secret_test-key",
     )
 
 
