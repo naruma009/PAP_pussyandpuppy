@@ -4,7 +4,6 @@ from pathlib import Path
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from starlette.middleware.cors import CORSMiddleware
-from starlette.staticfiles import StaticFiles
 
 from app.api.admin import router as admin_router
 from app.api.customer import router as customer_router
@@ -31,13 +30,11 @@ def create_app(
         raise RuntimeError("PAP_API_UPLOAD_DIR must be a directory")
     engine = create_database_engine(selected)
     if initialize:
-        selected.upload_dir.mkdir(parents=True, exist_ok=True)
         initialize_database(selected, engine)
 
     @asynccontextmanager
     async def lifespan(_application: FastAPI):
         if initialize_on_startup:
-            selected.upload_dir.mkdir(parents=True, exist_ok=True)
             if not selected.database_url:
                 initialize_database(selected, engine)
         yield
@@ -88,11 +85,6 @@ def create_app(
     application.include_router(customer_router, prefix="/api")
     application.include_router(orders_router, prefix="/api")
     application.include_router(admin_router, prefix="/api")
-    application.mount(
-        "/uploads/products",
-        StaticFiles(directory=selected.upload_dir, check_dir=False),
-        name="product-uploads",
-    )
     return application
 
 

@@ -153,7 +153,11 @@ async def migrate_legacy(request: Request, db: Session = Depends(get_db)):
         if not product.get("name"):
             continue
         age = product.get("age") if product.get("age") in {"all", "young", "adult", "senior"} else "all"
-        image_url = decode_legacy_image(product.get("image", ""), request.app.state.settings.upload_dir)
+        image_url = decode_legacy_image(
+            product.get("image", ""),
+            request.app.state.settings.upload_dir,
+            is_production=request.app.state.settings.is_production,
+        )
         product_id = int(product.get("id") or 0) or None
         values = (
             product["name"], product.get("description", ""), max(0, float(product.get("price", 0))),

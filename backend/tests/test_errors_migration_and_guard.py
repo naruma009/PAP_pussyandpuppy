@@ -35,7 +35,7 @@ def test_legacy_migration_endpoint_is_one_shot(client, settings):
     product = client.get("/api/products/50").json()
     assert product["price"] == 0
     assert product["stock"] == 0
-    assert client.get(product["image"]).content == b"png-data"
+    assert (settings.upload_dir / Path(product["image"]).name).read_bytes() == b"png-data"
     assert client.post("/api/admin/migrate", json={"products": []}).json() == {
         "migrated": False, "reason": "already_migrated"
     }
