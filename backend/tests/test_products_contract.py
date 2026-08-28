@@ -1,6 +1,5 @@
-from pathlib import Path
-
 from conftest import admin_login
+import httpx
 
 
 PRODUCT_FORM = {
@@ -15,7 +14,28 @@ PRODUCT_FORM = {
 }
 
 
-def test_product_crud_upload_replace_delete_and_static(client, settings, seed_product):
+def test_product_crud_upload_replace_delete(client, settings, seed_product, monkeypatch):
+    uploaded = []
+
+    class FakeAsyncClient:
+        async def __aenter__(self):
+            return self
+        async def __aexit__(self, *args):
+            return None
+        async def post(self, url, **kwargs):
+            uploaded.append((url, kwargs))
+            return httpx.Response(200, request=httpx.Request("POST", url))
+
+    class FakeClient:
+        def __enter__(self):
+            return self
+        def __exit__(self, *args):
+            return None
+        def delete(self, url, **kwargs):
+            return httpx.Response(200, request=httpx.Request("DELETE", url))
+
+    monkeypatch.setattr("app.uploads.httpx.AsyncClient", FakeAsyncClient)
+    monkeypatch.setattr("app.uploads.httpx.Client", FakeClient)
     assert client.get("/api/products").json() == []
     assert client.post("/api/products", data=PRODUCT_FORM).status_code == 401
     admin_login(client)
@@ -30,10 +50,9 @@ def test_product_crud_upload_replace_delete_and_static(client, settings, seed_pr
     assert product["petType"] == "cat"
     assert product["ageGroup"] == "adult"
     assert product["featured"] is True
-    assert product["image"].startswith("/uploads/products/")
-    first_path = settings.upload_dir / Path(product["image"]).name
-    assert first_path.read_bytes() == b"first-image"
-    assert client.get(product["image"]).content == b"first-image"
+    assert product["image"].startswith("https://project.supabase.co/storage/v1/object/public/product-images/")
+    assert uploaded[0][1]["headers"]["Content-Type"] == "image/png"
+    assert client.get("/uploads/products/anything.png").status_code == 404
 
     replacement = {**PRODUCT_FORM, "name": "Updated Bed"}
     updated = client.put(
@@ -43,12 +62,9 @@ def test_product_crud_upload_replace_delete_and_static(client, settings, seed_pr
     )
     assert updated.status_code == 200
     assert updated.json()["name"] == "Updated Bed"
-    assert not first_path.exists()
-    second_path = settings.upload_dir / Path(updated.json()["image"]).name
-    assert second_path.read_bytes() == b"replacement"
+    assert updated.json()["image"].startswith("https://project.supabase.co/storage/v1/object/public/product-images/")
 
     assert client.delete(f"/api/products/{product['id']}").status_code == 204
-    assert not second_path.exists()
     assert client.get(f"/api/products/{product['id']}").status_code == 404
 
 

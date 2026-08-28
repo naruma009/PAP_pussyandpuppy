@@ -38,6 +38,23 @@ class Settings(BaseSettings):
         default=None,
         validation_alias=AliasChoices("STRIPE_CANCEL_URL", "PAP_API_STRIPE_CANCEL_URL"),
     )
+    supabase_url: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices("SUPABASE_URL", "PAP_API_SUPABASE_URL"),
+    )
+    supabase_secret_key: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices(
+            "SUPABASE_SECRET_KEY",
+            "SUPABASE_SERVICE_ROLE_KEY",
+            "PAP_API_SUPABASE_SECRET_KEY",
+            "PAP_API_SUPABASE_SERVICE_ROLE_KEY",
+        ),
+    )
+    supabase_storage_bucket: str = Field(
+        default="product-images",
+        validation_alias=AliasChoices("SUPABASE_STORAGE_BUCKET", "PAP_API_SUPABASE_STORAGE_BUCKET"),
+    )
     max_content_length: int = 20 * 1024 * 1024
 
     model_config = SettingsConfigDict(
