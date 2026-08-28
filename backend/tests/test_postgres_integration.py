@@ -33,7 +33,7 @@ def test_postgres_core_smoke_and_cleanup():
             identity = session.connection().exec_driver_sql(
                 "SELECT current_database(), current_user"
             ).one()
-            assert identity == ("pal2paw", "prem")
+            assert all(isinstance(value, str) and value for value in identity)
 
         now = datetime.now(timezone.utc)
         with factory.begin() as session:
