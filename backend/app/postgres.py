@@ -5,6 +5,7 @@ from typing import Any
 
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
+from sqlalchemy.pool import NullPool
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
 from app.config import Settings
@@ -30,6 +31,12 @@ def create_database_engine(settings: Settings, **engine_options: Any) -> Engine:
     options: dict[str, Any] = {"pool_pre_ping": True, **engine_options}
     if url.startswith("sqlite"):
         options.setdefault("connect_args", {"check_same_thread": False})
+    elif url.startswith("postgresql"):
+        options["poolclass"] = NullPool
+        options["connect_args"] = {
+            **options.get("connect_args", {}),
+            "prepare_threshold": None,
+        }
     return create_engine(url, **options)
 
 
