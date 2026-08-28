@@ -2,20 +2,29 @@
 
 ## Current state
 
-FastAPI current API queries now use SQLAlchemy 2.x sessions and Core statements. SQLite remains a local/test compatibility backend initialized from SQLAlchemy metadata. The real `pal2paw` PostgreSQL schema is initialized and application connectivity has been verified through the development tunnel; data migration and production deployment are not complete.
+FastAPI API queries use SQLAlchemy 2.x sessions and Core statements. SQLite remains a local/test compatibility backend initialized from SQLAlchemy metadata. Supabase PostgreSQL is the hosted deployment target; Alembic includes the complete application schema and the `m5b1_rls` security revision. Public deployment and target-database release verification are not complete.
 
 The legacy Flask app uses a separate SQLite file at `instance/pap.db` and root `schema.sql`. FastAPI runtime guards reject the legacy database and upload paths.
 
 ## Target and operating rules
 
-- Target database: PostgreSQL 16 on an external server.
-- Development connection: through an SSH tunnel when required by the environment.
-- The tunnel is development infrastructure only; it is not a production deployment model.
+- Hosted target database: Supabase PostgreSQL.
+- Schema migrations: Supabase direct connection on port 5432.
+- Vercel runtime: Supabase transaction pooler on port 6543 with `sslmode=require`.
+- PostgreSQL engines use `NullPool` and `prepare_threshold=None`; SQLite behavior remains unchanged.
 - Production integration is not complete until deployment, operational controls, and data migration are addressed.
 - Application configuration must be read from `.env`/hosting environment configuration. Never hardcode credentials.
 - Never put a real host, password, private key, or connection string in documentation or Git.
 - Schema changes must use a migration mechanism. Do not rely on startup-only ad hoc schema mutation.
-- Define backups, rollback, indexes, constraints, transaction behavior, and connection pooling before production cutover; details are TBD.
+- Define backups, rollback, observability, and restore testing before production cutover.
+
+## Supabase deployment security
+
+- `m5b1_rls` enables Row Level Security on `users`, `products`, `orders`, `order_items`, and `settings` without public policies.
+- Public publishable/anon REST requests therefore receive no application rows. A live read-only probe returned an authorization error and exposed no row data.
+- The application does not use the Supabase REST API for database business logic; FastAPI connects through PostgreSQL using server-only `DATABASE_URL`.
+- Every migration is run manually with `alembic upgrade head` against the direct connection. Application startup never mutates production schema.
+- No database URL or key belongs in Git or any `VITE_*` variable.
 
 ## M2 connectivity status
 
