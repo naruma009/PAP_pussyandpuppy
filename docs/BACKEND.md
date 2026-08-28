@@ -2,7 +2,7 @@
 
 ## FastAPI structure
 
-The current backend is under `backend/app/`. `main.py` creates the FastAPI app, installs session middleware and request protections, mounts routers, and serves product uploads. `config.py` loads `PAP_API_` settings plus environment-only `DATABASE_URL`; `db.py` provides SQLAlchemy sessions and local SQLite initialization compatibility. `postgres.py` provides the engine/session foundation and `models.py` defines the current Core table metadata.
+The current backend is under `backend/app/`. `main.py` creates the FastAPI app, installs session middleware and request protections, and mounts routers. `config.py` loads `PAP_API_` settings plus environment-only database, Stripe, and Supabase settings; `db.py` provides SQLAlchemy sessions and local SQLite initialization compatibility. `postgres.py` provides the engine/session foundation and `models.py` defines the current Core table metadata. `api/index.py` is the Vercel ASGI entrypoint.
 
 ## API groups
 
@@ -13,9 +13,9 @@ The current backend is under `backend/app/`. `main.py` creates the FastAPI app, 
 - Admin: role-aware email/password login/session/logout, `GET /api/admin/orders`, `GET /api/admin/orders/{id}`, `PATCH /api/admin/orders/{id}/status`, and development-only `/api/admin/migrate`; every protected operation requires an active user with `role=admin`
 - Product management: admin-protected `POST /api/products`, `PUT /api/products/{id}`, `DELETE /api/products/{id}`
 
-Uploads are handled by FastAPI under the configured non-legacy upload directory. API responses use an `error` field for the tested error contract.
+Product image uploads are sent from FastAPI to the public Supabase Storage bucket with server-only credentials. Uploads use generated UUID names, return full public URLs, and safe deletion accepts only URLs belonging to the configured Supabase project/bucket. FastAPI does not serve `/uploads/products`. API responses use an `error` field for the tested error contract.
 
-Production configuration is environment-driven: `PAP_API_ENV`, `PAP_API_HOST`, `PAP_API_PORT`, `DATABASE_URL`, `PAP_API_SECRET_KEY`, `PAP_API_PUBLIC_ORIGIN`, `PAP_API_CORS_ALLOWED_ORIGINS`, `PAP_API_UPLOAD_DIR`, cookie settings, and Stripe settings. `backend/.env.example` contains names and safe placeholders only. Production startup does not run database initialization; run the approved migration release step once, then start the backend from `backend/` with `python -m uvicorn app.main:app --host ${PAP_API_HOST} --port ${PAP_API_PORT}` (PowerShell: `python -m uvicorn app.main:app --host $env:PAP_API_HOST --port $env:PAP_API_PORT`), with no `--reload` and one process-supervised instance per release.
+Production configuration is environment-driven: `PAP_API_ENV`, `DATABASE_URL`, `PAP_API_SECRET_KEY`, `PAP_API_PUBLIC_ORIGIN`, optional CORS/cookie settings, Stripe settings, `SUPABASE_URL`, `SUPABASE_SECRET_KEY`, and `SUPABASE_STORAGE_BUCKET`. `backend/.env.example` contains names and safe placeholders only. Production startup does not initialize schema; Alembic remains an explicit release step against the direct database connection. Vercel runtime uses the pooler URL and the committed `api/index.py`; local process deployment can still use Uvicorn without `--reload`.
 
 State-changing cookie-authenticated API requests reject an explicit unknown `Origin`; the Stripe webhook is exempt from this origin check and continues to verify its raw request body with `Stripe-Signature`.
 
@@ -25,4 +25,4 @@ Root `app.py` is the Flask implementation of the same broad catalog, cart/order,
 
 ## Gaps before production
 
-The FastAPI persistence layer is now ported to SQLAlchemy, and PostgreSQL schema/data plus customer and admin authentication have been verified. Customer and admin passwords use Argon2id hashes and the existing secure session cookie stores only a user reference. Admin authorization uses the `users.role` value looked up server-side, and the interactive getpass-based bootstrap CLI has created the initial admin account. Order status lifecycle, cancellation stock restoration, immutable customer/shipping/item snapshots, and Stripe Checkout test-mode integration code are implemented. External Stripe verification, production deployment, observability, and operational controls are not confirmed complete.
+The FastAPI persistence layer uses SQLAlchemy with serverless-safe PostgreSQL options and SQLite test compatibility. Supabase RLS and Storage code are implemented and Storage has passed a bounded live upload/read/delete smoke test. Customer/admin identity, order lifecycle, stock restoration, immutable snapshots, and Stripe Checkout test-mode code are implemented. Vercel Preview routing/runtime readiness, hosted cookie behavior, Stripe webhook delivery, admin bootstrap against the target database, observability, and operational controls are not yet confirmed complete.

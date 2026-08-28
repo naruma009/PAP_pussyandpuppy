@@ -2,33 +2,61 @@
 
 ## Current implementation
 
-The current migration stack is:
+The active stack is:
 
-`React/Vite frontend → FastAPI backend → SQLite database`
+```text
+React/Vite frontend
+  -> same-origin /api
+  -> FastAPI
+       -> SQLAlchemy 2 / PostgreSQL (Supabase target)
+       -> Supabase Storage (product images)
+```
 
-The frontend calls `/api` with same-origin credentials. Vite proxies `/api` and `/uploads` to a local FastAPI target during development. FastAPI serves product uploads and uses session middleware.
+SQLite remains a local/test compatibility database. Vite proxies `/api` to
+FastAPI during development. In Vercel, `api/index.py` exposes the ASGI app and
+`vercel.json` routes API requests without changing their `/api/*` paths.
 
-Backend modules are grouped under `backend/app/`: route modules, configuration, SQLite access, serializers, sessions, and upload handling.
+PostgreSQL runtime engines use `NullPool` and disable psycopg prepared
+statements so Vercel functions can use the Supabase transaction pooler safely.
+Product upload helpers send bytes directly to the public `product-images`
+bucket and return full public URLs; FastAPI no longer mounts a local upload
+directory.
+
+## Deployment topology
+
+```text
+Browser
+  -> Vercel HTTPS origin
+       -> React static assets / SPA fallback
+       -> /api/* FastAPI function
+              -> Supabase transaction pooler (runtime)
+              -> Supabase Storage
+              -> Stripe Checkout test mode
+```
+
+Alembic is run manually from a trusted environment against the Supabase direct
+connection, never as a Vercel startup side effect. The RLS migration denies
+public REST access to application tables while backend database access remains
+server-side.
 
 ## Legacy implementation
 
-The legacy stack remains at the repository root:
+The retired stack remains at the repository root:
 
 `Vanilla HTML/JS/CSS → Flask app.py → SQLite + filesystem uploads`
 
-The legacy database is `instance/pap.db`; legacy uploads are under `uploads/products`. FastAPI explicitly rejects those paths in its runtime validation. Keep the legacy runtime independently runnable until controlled cutover.
-
-## Target architecture
-
-`React frontend → FastAPI backend → PostgreSQL 16`
-
-The target must be a real deployable web application, not a demo or localhost-only setup. The frontend, backend, and database must be deployable for other users without a developer machine or temporary tunnel.
-
-The migration is not a reason to restart from scratch. Extend the current React/FastAPI implementation only after checking whether the relevant flow already exists, and retire legacy paths only through an explicit cutover plan.
+It is retained for reference and excluded from Vercel by `.vercelignore`.
+FastAPI still rejects legacy database/upload paths. Do not modify or deploy the
+legacy stack unless an explicit cutover task authorizes it.
 
 ## Boundaries to preserve
 
-- Frontend controls presentation and client state; it must not be the authority for permissions, stock, order totals, or identity.
-- FastAPI owns API validation, authentication/authorization decisions, stock/order transactions, and database access.
-- PostgreSQL is the target system of record. Exact connection/pooling/deployment design is TBD.
-- Legacy Flask/Vanilla code is compatibility or migration scope, not the target for new feature work when a React/FastAPI equivalent exists.
+- Frontend controls presentation and client state, not permissions, stock,
+  totals, payment authority, or identity.
+- FastAPI owns API validation, authentication/authorization, transactions,
+  database access, Stripe verification, and Storage credentials.
+- Secrets remain server-side and must never use a `VITE_*` variable.
+- Preview and Production use the same-origin cookie design and require their
+  own complete Vercel environment-variable scopes.
+- Schema changes use explicit Alembic migrations against the direct database
+  connection; runtime traffic uses the transaction pooler.

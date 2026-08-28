@@ -4,7 +4,7 @@
 
 - The repository is on branch `react-fastapi-migration`.
 - Current implementation includes a React/Vite frontend under `frontend/` and a FastAPI application under `backend/app/`.
-- FastAPI persistence uses SQLAlchemy 2.x with SQLite retained for local/test compatibility; the development PostgreSQL schema is managed by Alembic.
+- FastAPI persistence uses SQLAlchemy 2.x with SQLite retained for local/test compatibility; Supabase PostgreSQL is the hosted target and schema is managed explicitly by Alembic.
 - The legacy runtime remains in the repository: root-level static HTML, `css/`, `js/`, root `app.py` (Flask), root `schema.sql`, `instance/`, and `uploads/`.
 - The repository also contains `migration/baseline/` contracts and compatibility notes.
 
@@ -34,7 +34,7 @@ Legacy implementation remains independently present and is not the current targe
 | Admin login | React email/password UI + FastAPI role-backed session | Real identity and role-based authorization are canonical; initial admin bootstrapped |
 | Product CRUD and stock | Admin-protected FastAPI endpoints + React admin UI | Implemented in current stack; PostgreSQL smoke-verified |
 | Admin order management | Admin order listing + status mutation UI | Backend lifecycle and transactional cancellation restore are implemented; React admin controls and customer status display are complete |
-| Deployable public service | Local Vite proxy and local FastAPI defaults exist | Production deployment/cutover not verified; TBD |
+| Deployable public service | Vercel entrypoint, same-origin routes, pinned dependencies, Supabase pooling/RLS/Storage code | Packaging verified locally; hosted Preview/cutover not yet verified |
 
 ## Known issues and production blockers
 
@@ -44,7 +44,7 @@ Legacy implementation remains independently present and is not the current targe
 - Checkout has Stripe Checkout sandbox integration and payment state workflow; public deployment and production Stripe verification remain outstanding.
 - Admin order management now supports server-side status transitions and transactional cancellation stock restoration; fulfillment automation and auditability remain TBD.
 - React admin order controls and customer order status labels are implemented for the canonical lifecycle; payment/fulfillment automation remains TBD.
-- Deployment to a persistent public frontend/backend/database is not verified. Exact hosting, HTTPS, domain, backups, observability, and scaling plan are TBD.
+- Public Vercel deployment is not verified. Preview/Production environment configuration, runtime readiness, Stripe webhook delivery, backups, and observability remain release blockers.
 - Existing React/Vite configuration includes a local API proxy and a trycloudflare allowed host; these are development concerns, not proof of production deployment.
 - No production end-to-end test exists; the M2D core PostgreSQL integration smoke test uses temporary data and cleans it up.
 
@@ -99,19 +99,28 @@ Do not treat this document as evidence that the application is production-ready.
 - React checkout/order history includes guarded payment initiation plus minimal success/cancel pages. Browser redirects are not payment authority.
 - External Stripe test-mode verification, Stripe credentials, and real payment remain NOT DONE.
 
-## M6A deployment readiness
+## M6A deployment readiness (historical plan)
 
 - A production topology plan is documented in `docs/tasks/M6A_DEPLOYMENT_PLAN.md`.
-- Recommended topology is backend plus private PostgreSQL on the same shared VM behind a public HTTPS reverse proxy; VM-owner permission is required before any deployment or server change.
-- Current SSH tunnel is development-only. Public HTTPS, process supervision, readiness checks, persistent upload storage, secret management, and deployment acceptance remain outstanding.
-- No production/server/database/network/Stripe-live change was made in M6A.
+- M6A documented the earlier VM topology before Vercel and Supabase were selected.
+- The current deployment target is one Vercel project with Supabase PostgreSQL and Storage; `DEPLOYMENT.md` is now the canonical release guide.
+- The historical VM plan remains useful context but is superseded for the active deployment path.
 
 ## M6B1 local production hardening
 
 - Production configuration is environment-driven for runtime mode, session secret/cookie policy, database URL, public/CORS origins, upload directory, and Stripe URLs/secrets. No production domain or active secret is hardcoded.
 - `/api/health` is liveness; `/api/ready` verifies database usability without exposing diagnostics. Production app import disables startup schema initialization; Alembic remains an explicit single release step.
 - Explicit unknown origins are rejected for cookie-authenticated state changes, with Stripe raw-body signature verification preserved. Configured upload directories are resolved and created safely without migrating or deleting existing files.
-- Local production hardening is ready. VM, reverse proxy, HTTPS, public DNS, persistent VM storage, and public deployment are NOT DEPLOYED.
+- Local production hardening is ready. Vercel Preview, environment scopes, public HTTPS runtime, and deployment acceptance are NOT VERIFIED.
+
+## Vercel and Supabase readiness
+
+- `api/index.py`, `vercel.json`, `.vercelignore`, and pinned root/backend requirements prepare the React/FastAPI stack for one Vercel project while excluding the retired Flask stack.
+- PostgreSQL runtime uses `NullPool` and disables prepared statements for the Supabase transaction pooler; SQLite test behavior is preserved.
+- `m5b1_rls` protects all application tables from public REST access. A bounded publishable-key probe returned HTTP 401 and exposed no rows.
+- Product image create/delete uses Supabase Storage with modern `sb_secret_` authentication through the `apikey` header. A bounded live upload/public-read/delete/list-cleanup smoke test passed.
+- Backend regression passes 58 tests with 2 opt-in integration skips. Frontend regression passes 43 files / 221 tests and the production build passes.
+- Vercel CLI local runtime verification is blocked until a Vercel account is authenticated and the project is linked. No Preview URL, hosted readiness result, Stripe webhook delivery, or production promotion is claimed.
 
 ## M6C1 final local end-to-end verification
 
@@ -119,7 +128,7 @@ Do not treat this document as evidence that the application is production-ready.
 - Existing backend regression passed 55 tests including the two opt-in PostgreSQL smoke tests with temporary-row cleanup. Customer/admin authorization, catalog/order/status/cancellation, Stripe signature protection, cookie/CORS/origin hardening, and upload contracts are covered by the completed test suite.
 - Frontend full regression passed 40 files and 218 tests using serialized Vitest workers; production build passed. The earlier 120-second timeout/EPIPE was runner termination caused by jsdom startup cost, not an application failure.
 - Temporary PostgreSQL smoke rows were verified absent after cleanup; the existing admin, products, and orders remained present. No schema migration or pre-existing data deletion was performed.
-- PUBLIC DEPLOYMENT NOT YET DONE. VM, reverse proxy, HTTPS, public DNS, firewall/network, and Stripe live mode remain outside this local verification.
+- PUBLIC DEPLOYMENT NOT YET DONE. Vercel Preview/Production configuration, hosted readiness, Stripe webhook delivery, and release acceptance remain outside this local verification.
 
 ## M6C2 pre-deploy storefront cleanup
 
